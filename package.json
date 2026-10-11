@@ -1,0 +1,12 @@
+{
+  "name": "gedver",
+  "version": "1.0.0",
+  "description": "Offline single-file GEDCOM location visualizer",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build-single-file.js",
+    "build:maps": "node scripts/build-regional-map.js",
+    "test": "node --check src/gedver-core.js && node --check src/app.js && node --check scripts/build-single-file.js && node --check scripts/build-regional-map.js"
+  },
+  "private": true
+}

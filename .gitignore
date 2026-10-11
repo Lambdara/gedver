@@ -1,0 +1,14 @@
+*.ged
+*.GED
+*.gedcom
+*.GEDCOM
+*.local.json
+*.locations.json
+*.locations.local.json
+example result.png
+src/data/.countries-10m-source.json
+node_modules/
+.DS_Store
+.idea/
+coverage/
+*.log

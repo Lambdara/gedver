@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gedver</title>
+    <style>
+__STYLE__
+    </style>
+  </head>
+  <body>
+    <header class="app-bar">
+      <div class="brand">
+        <h1>Gedver</h1>
+        <div id="statusLine" class="status-line">No GEDCOM loaded</div>
+      </div>
+      <div class="top-actions">
+        <label class="file-button" for="gedcomFile">Open GEDCOM</label>
+        <input id="gedcomFile" type="file" accept=".ged,.gedcom,text/plain" />
+        <label class="file-button" for="locationFile">Import coordinates</label>
+        <input id="locationFile" type="file" accept=".json,.csv,text/csv,application/json,text/plain" />
+        <button id="exportLocations" type="button">Export coordinates</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <aside class="panel panel-left" aria-label="Controls">
+        <section class="panel-section">
+          <h2>Tree</h2>
+          <div class="field">
+            <label for="probandSelect">Proband</label>
+            <select id="probandSelect" disabled>
+              <option value="">Load a GEDCOM</option>
+            </select>
+          </div>
+          <label class="choice">
+            <input id="ancestryOnly" type="checkbox" checked />
+            <span>Only proband ancestry</span>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Events</h2>
+          <label class="choice">
+            <input id="filterBirth" type="checkbox" checked />
+            <span>Birth</span>
+          </label>
+          <label class="choice">
+            <input id="filterMarriage" type="checkbox" checked />
+            <span>Marriage</span>
+          </label>
+          <label class="choice">
+            <input id="filterDeath" type="checkbox" checked />
+            <span>Death</span>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Color</h2>
+          <div class="segmented" role="radiogroup" aria-label="Marker color mode">
+            <label>
+              <input type="radio" name="colorMode" value="single" checked />
+              <span>Single color</span>
+            </label>
+            <label>
+              <input type="radio" name="colorMode" value="time" />
+              <span>Time gradient</span>
+            </label>
+            <label>
+              <input type="radio" name="colorMode" value="lineageX" />
+              <span>Lineage position</span>
+            </label>
+            <label>
+              <input type="radio" name="colorMode" value="lineageDepth" />
+              <span>Generation depth</span>
+            </label>
+          </div>
+          <div id="colorLegend" class="color-legend hidden" aria-live="polite">
+            <div id="colorLegendTitle" class="color-legend-title"></div>
+            <div id="colorLegendRamp" class="color-legend-ramp"></div>
+            <div class="color-legend-scale">
+              <span id="colorLegendMin"></span>
+              <span id="colorLegendMax"></span>
+            </div>
+            <div id="colorLegendNote" class="subtle"></div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Summary</h2>
+          <div class="summary-grid">
+            <div class="metric"><span class="subtle">People</span><strong id="peopleCount">0</strong></div>
+            <div class="metric"><span class="subtle">Events</span><strong id="eventCount">0</strong></div>
+            <div class="metric"><span class="subtle">Mapped</span><strong id="mappedCount">0</strong></div>
+            <div class="metric"><span class="subtle">Unmapped</span><strong id="unmappedCount">0</strong></div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Coordinates</h2>
+          <div class="button-row">
+            <button id="showUnmapped" type="button">Unmapped</button>
+            <button id="showMapped" type="button">Mapped</button>
+            <button id="clearLocations" type="button">Clear saved</button>
+          </div>
+          <div id="placeList" class="place-list" aria-live="polite"></div>
+        </section>
+      </aside>
+
+      <section class="map-panel" aria-label="Map">
+        <div class="map-toolbar">
+          <button id="zoomIn" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+          <button id="zoomOut" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+          <button id="fitMap" type="button" title="Fit markers" aria-label="Fit markers">⤢</button>
+        </div>
+        <div id="mapViewport" class="map-viewport" tabindex="0">
+          <svg id="offlineLayer" class="offline-layer" aria-hidden="true"></svg>
+          <svg id="markerLayer" class="marker-layer" aria-label="Location markers"></svg>
+          <div id="mapEmpty" class="map-empty">No mapped events</div>
+          <div class="map-attribution">Made with Natural Earth</div>
+        </div>
+      </section>
+
+      <aside class="panel panel-right" aria-label="Selected location">
+        <section class="panel-section">
+          <h2>Location</h2>
+          <h3 id="selectedPlaceTitle">No location selected</h3>
+          <div id="selectedPlaceMeta" class="subtle">Click a marker on the map</div>
+        </section>
+        <section class="panel-section">
+          <h2>Events at location</h2>
+          <div id="eventList" class="event-list"></div>
+        </section>
+      </aside>
+    </main>
+
+    <noscript>This page needs JavaScript enabled.</noscript>
+    <script>
+window.GedverMapData = {
+  regions: [__REGIONAL_ATLAS__]
+};
+    </script>
+    <script>
+__CORE_SCRIPT__
+    </script>
+    <script>
+__APP_SCRIPT__
+    </script>
+  </body>
+</html>
