@@ -355,7 +355,7 @@
       return result;
     }
 
-    const queue = [{ id: cleanProbandId, depth: 0, pathIndex: 0 }];
+    const queue = [{ id: cleanProbandId, depth: 0, pathIndex: 0, path: [] }];
     const seenStates = new Set();
 
     while (queue.length) {
@@ -367,17 +367,22 @@
       const x = lineageXForPath(state.depth, state.pathIndex);
       const current = result.get(state.id);
       if (!current || state.depth < current.depth) {
-        result.set(state.id, { depth: state.depth, positions: [x] });
+        result.set(state.id, { depth: state.depth, positions: [x], relations: [relationLabelForPath(state.path)] });
       } else if (current.depth === state.depth && !current.positions.includes(x)) {
         current.positions.push(x);
+      }
+      const updated = result.get(state.id);
+      const relation = relationLabelForPath(state.path);
+      if (updated && state.depth === updated.depth && relation && !updated.relations.includes(relation)) {
+        updated.relations.push(relation);
       }
 
       const parents = getParents(data, state.id);
       if (parents.father) {
-        queue.push({ id: parents.father, depth: state.depth + 1, pathIndex: state.pathIndex * 2 });
+        queue.push({ id: parents.father, depth: state.depth + 1, pathIndex: state.pathIndex * 2, path: [...state.path, "father"] });
       }
       if (parents.mother) {
-        queue.push({ id: parents.mother, depth: state.depth + 1, pathIndex: state.pathIndex * 2 + 1 });
+        queue.push({ id: parents.mother, depth: state.depth + 1, pathIndex: state.pathIndex * 2 + 1, path: [...state.path, "mother"] });
       }
     }
 
@@ -386,6 +391,23 @@
     }
 
     return result;
+  }
+
+  function relationLabelForPath(path) {
+    if (!path || !path.length) return "proband";
+    const depth = path.length;
+    const first = path[0];
+    const last = path[path.length - 1];
+    const side = first === "father" ? "paternal" : first === "mother" ? "maternal" : "";
+    const gendered = last === "father" ? "father" : last === "mother" ? "mother" : "parent";
+
+    if (depth === 1) return gendered;
+
+    const grandRelation = gendered === "father" ? "grandfather" : gendered === "mother" ? "grandmother" : "grandparent";
+    if (depth === 2) return [side, grandRelation].filter(Boolean).join(" ");
+
+    const greatPrefix = Array(depth - 2).fill("great").join("-");
+    return [side, `${greatPrefix}-${grandRelation}`].filter(Boolean).join(" ");
   }
 
   function lineageXForPath(depth, pathIndex) {
@@ -465,6 +487,7 @@
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
+      relation: relationForIds([individual.id], ancestry),
     };
   }
 
@@ -488,7 +511,21 @@
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
+      relation: relationForIds(people, ancestry),
     };
+  }
+
+  function relationForIds(ids, ancestry) {
+    const labels = ids
+      .map((id) => ancestry.get(id))
+      .filter(Boolean)
+      .flatMap((metric) => metric.relations || [])
+      .filter(Boolean);
+    return unique(labels).join(" + ");
+  }
+
+  function unique(values) {
+    return Array.from(new Set(values));
   }
 
   function lineageMetric(ids, ancestry) {

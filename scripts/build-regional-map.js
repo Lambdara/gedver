@@ -5,10 +5,29 @@ const { resolve } = require("path");
 
 const root = resolve(__dirname, "..");
 const sourcePath = resolve(root, "src/data/.countries-10m-source.json");
+const admin1SourcePath = resolve(root, "src/data/.admin1-10m-source.geojson");
+const lakesSourcePath = resolve(root, "src/data/.lakes-10m-source.geojson");
 const outputPath = resolve(root, "src/data/northwest-europe-10m.json");
 const sourceUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json";
+const admin1SourceUrl = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson";
+const lakesSourceUrl = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_lakes.geojson";
 
 const SELECTED_COUNTRIES = new Set(["Germany", "Netherlands"]);
+const SELECTED_PROVINCES = new Set([
+  "Drenthe",
+  "Flevoland",
+  "Friesland",
+  "Gelderland",
+  "Groningen",
+  "Limburg",
+  "Noord-Brabant",
+  "Noord-Holland",
+  "Overijssel",
+  "Utrecht",
+  "Zeeland",
+  "Zuid-Holland",
+]);
+const SELECTED_LAKES = new Set(["IJsselmeer"]);
 const REGION_BOUNDS = { minLng: 2.5, minLat: 47, maxLng: 15.6, maxLat: 55.2 };
 
 const DETAIL_LEVELS = [
@@ -110,8 +129,14 @@ main().catch((error) => {
 });
 
 async function main() {
-  await ensureSource();
+  await Promise.all([
+    ensureSource(sourcePath, sourceUrl),
+    ensureSource(admin1SourcePath, admin1SourceUrl),
+    ensureSource(lakesSourcePath, lakesSourceUrl),
+  ]);
   const topology = JSON.parse(await readFile(sourcePath, "utf8"));
+  const admin1GeoJson = JSON.parse(await readFile(admin1SourcePath, "utf8"));
+  const lakesGeoJson = JSON.parse(await readFile(lakesSourcePath, "utf8"));
   const arcs = decodeTopoArcs(topology);
   const sourceCountries = [];
 
@@ -124,15 +149,26 @@ async function main() {
     }
   }
 
+  const sourceProvinces = geoJsonPolygons(admin1GeoJson.features || [], (feature) => {
+    const properties = feature.properties || {};
+    return properties.adm0_a3 === "NLD" && SELECTED_PROVINCES.has(properties.name);
+  });
+  const sourceWater = geoJsonPolygons(lakesGeoJson.features || [], (feature) => {
+    const properties = feature.properties || {};
+    return SELECTED_LAKES.has(properties.name);
+  });
+
   const levels = DETAIL_LEVELS.map((level) => ({
     id: level.id,
     minZoom: level.minZoom,
     countries: buildLevelCountries(sourceCountries, level.minPointDelta),
+    provinces: buildLevelCountries(sourceProvinces, level.minPointDelta),
+    water: buildLevelCountries(sourceWater, level.minPointDelta),
   }));
 
   const output = {
     name: "Netherlands and Germany 10m",
-    bbox: bboxForPolygons(sourceCountries),
+    bbox: bboxForPolygons([...sourceCountries, ...sourceProvinces, ...sourceWater]),
     levels,
     labels: LABELS.map(([name, lat, lng, minZoom, rank]) => ({ name, lat, lng, minZoom, rank })).sort(
       (a, b) => a.rank - b.rank || a.minZoom - b.minZoom || a.name.localeCompare(b.name),
@@ -142,18 +178,22 @@ async function main() {
   await writeFile(outputPath, `${JSON.stringify(output)}\n`, "utf8");
   console.log(`Wrote ${outputPath}`);
   console.log(`${sourceCountries.length} polygons, ${pointCount(sourceCountries)} source points`);
+  console.log(`${sourceProvinces.length} province polygons, ${pointCount(sourceProvinces)} source points`);
+  console.log(`${sourceWater.length} water polygons, ${pointCount(sourceWater)} source points`);
   for (const level of output.levels) {
-    console.log(`${level.id}: ${pointCount(level.countries)} points`);
+    console.log(
+      `${level.id}: countries ${pointCount(level.countries)} points, provinces ${pointCount(level.provinces)} points, water ${pointCount(level.water)} points`,
+    );
   }
   console.log(`${Buffer.byteLength(JSON.stringify(output))} bytes`);
 }
 
-function ensureSource() {
-  if (existsSync(sourcePath)) return Promise.resolve();
+function ensureSource(path, url) {
+  if (existsSync(path)) return Promise.resolve();
   return new Promise((resolvePromise, rejectPromise) => {
-    const file = createWriteStream(sourcePath);
+    const file = createWriteStream(path);
     https
-      .get(sourceUrl, (response) => {
+      .get(url, (response) => {
         if (response.statusCode !== 200) {
           rejectPromise(new Error(`Could not download map source: HTTP ${response.statusCode}`));
           return;
@@ -198,6 +238,29 @@ function geometryPolygons(geometry, arcs) {
   if (geometry.type === "MultiPolygon") {
     return geometry.arcs.map((polygon) => polygonFromRings(ringsFromTopology(polygon, arcs)));
   }
+  return [];
+}
+
+function geoJsonPolygons(features, predicate) {
+  const polygons = [];
+  for (const feature of features) {
+    if (!predicate(feature)) continue;
+    for (const rings of geoJsonGeometryRings(feature.geometry)) {
+      const cleanRings = rings.map((ring) => ring.map((coordinate) => [round(coordinate[0]), round(coordinate[1])]));
+      polygons.push({
+        name: feature.properties && feature.properties.name ? feature.properties.name : "",
+        rings: cleanRings,
+        bbox: bboxForRings(cleanRings),
+      });
+    }
+  }
+  return polygons.filter((polygon) => Number.isFinite(polygon.bbox.minLng));
+}
+
+function geoJsonGeometryRings(geometry) {
+  if (!geometry) return [];
+  if (geometry.type === "Polygon") return [geometry.coordinates];
+  if (geometry.type === "MultiPolygon") return geometry.coordinates;
   return [];
 }
 

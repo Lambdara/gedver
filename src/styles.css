@@ -261,6 +261,12 @@ input[type="file"] {
   font-size: 18px;
 }
 
+.summary-breakdown {
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 8px;
+}
+
 .map-panel {
   background: #cfe3ee;
   min-height: 0;
@@ -335,6 +341,22 @@ input[type="file"] {
   stroke: #5f765d;
   stroke-linejoin: round;
   stroke-width: 0.85;
+}
+
+.map-detail-water {
+  fill: #b9dceb;
+  fill-rule: evenodd;
+  stroke: #7eb2c9;
+  stroke-linejoin: round;
+  stroke-width: 0.8;
+}
+
+.map-province-border {
+  fill: none;
+  stroke: #4d6857;
+  stroke-dasharray: 3 2;
+  stroke-linejoin: round;
+  stroke-width: 0.7;
 }
 
 .map-grid {

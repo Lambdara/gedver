@@ -51,6 +51,8 @@
     eventCount: byId("eventCount"),
     mappedCount: byId("mappedCount"),
     unmappedCount: byId("unmappedCount"),
+    eventBreakdown: byId("eventBreakdown"),
+    missingLocationNotice: byId("missingLocationNotice"),
     showUnmapped: byId("showUnmapped"),
     showMapped: byId("showMapped"),
     clearLocations: byId("clearLocations"),
@@ -277,12 +279,44 @@
   }
 
   function renderSummary() {
-    const mapped = state.groups.filter((group) => group.coordinates).length;
-    const unmapped = state.groups.length - mapped;
-    el.peopleCount.textContent = state.data ? state.data.individuals.size.toLocaleString() : "0";
+    const mapped = eventCountForGroups(state.groups.filter((group) => group.coordinates));
+    const unmapped = state.visibleEvents.length - mapped;
+    const unmappedPlaces = state.groups.filter((group) => !group.coordinates);
+    el.peopleCount.textContent = peopleCountForEvents(state.visibleEvents).toLocaleString();
     el.eventCount.textContent = state.visibleEvents.length.toLocaleString();
     el.mappedCount.textContent = mapped.toLocaleString();
     el.unmappedCount.textContent = unmapped.toLocaleString();
+    el.eventBreakdown.textContent = eventBreakdownText(state.visibleEvents);
+    el.missingLocationNotice.classList.toggle("hidden", !unmappedPlaces.length);
+    el.missingLocationNotice.textContent = unmappedPlaces.length
+      ? `${unmappedPlaces.length.toLocaleString()} GEDCOM place name${unmappedPlaces.length === 1 ? " is" : "s are"} missing from the coordinate table. Check the Unmapped list below.`
+      : "";
+  }
+
+  function eventCountForGroups(groups) {
+    return groups.reduce((sum, group) => sum + group.events.length, 0);
+  }
+
+  function peopleCountForEvents(events) {
+    const people = new Set();
+    for (const event of events) {
+      for (const personId of event.people || []) {
+        if (personId) people.add(personId);
+      }
+    }
+    return people.size;
+  }
+
+  function eventBreakdownText(events) {
+    if (!events.length) return "";
+    const counts = events.reduce(
+      (total, event) => {
+        total[event.type] = (total[event.type] || 0) + 1;
+        return total;
+      },
+      { birth: 0, marriage: 0, death: 0 },
+    );
+    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()}`;
   }
 
   function renderColorLegend() {
@@ -484,9 +518,11 @@
       meta.className = "event-meta";
       const eventLine = document.createElement("span");
       eventLine.textContent = `${event.label} · ${event.dateLabel || "No date"}`;
+      const relationLine = document.createElement("span");
+      relationLine.textContent = event.relation ? `Relation to proband: ${event.relation}` : "Relation to proband: not in ancestry";
       const placeLine = document.createElement("span");
       placeLine.textContent = event.place;
-      meta.append(eventLine, placeLine);
+      meta.append(eventLine, relationLine, placeLine);
       row.append(name, meta);
       el.eventList.append(row);
     }
@@ -550,10 +586,16 @@
     for (const region of detailRegions) {
       const level = detailLevelForRegion(region);
       const detailLand = pathForPolygons(level.countries, width, height, bounds, { split: false, close: true });
+      const detailWater = pathForPolygons(level.water, width, height, bounds, { split: false, close: true });
       const detailBorders = pathForPolygons(level.countries, width, height, bounds, { split: true, close: false });
+      const provinceBorders = pathForPolygons(level.provinces, width, height, bounds, { split: true, close: false });
       if (detailLand) parts.push(`<path class="map-detail-land" d="${detailLand}"></path>`);
+      if (detailWater) parts.push(`<path class="map-detail-water" d="${detailWater}"></path>`);
       if (detailBorders) {
         parts.push(`<path class="map-detail-border" d="${detailBorders}"></path>`);
+      }
+      if (provinceBorders) {
+        parts.push(`<path class="map-province-border" d="${provinceBorders}"></path>`);
       }
     }
   }
@@ -1022,11 +1064,13 @@
           id: level.id || "detail",
           minZoom: Number(level.minZoom) || 4.4,
           countries: level.countries || [],
+          provinces: level.provinces || [],
+          water: level.water || [],
         }))
         .sort((a, b) => a.minZoom - b.minZoom);
     }
 
-    return [{ id: "legacy", minZoom: 4.4, countries: region.countries || [] }];
+    return [{ id: "legacy", minZoom: 4.4, countries: region.countries || [], provinces: [], water: [] }];
   }
 
   function gridStepForZoom(zoom) {

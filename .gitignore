@@ -7,6 +7,8 @@
 *.locations.local.json
 example result.png
 src/data/.countries-10m-source.json
+src/data/.admin1-10m-source.geojson
+src/data/.lakes-10m-source.geojson
 node_modules/
 .DS_Store
 .idea/
