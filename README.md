@@ -10,6 +10,8 @@ npm run build
 
 The build writes `dist/gedver.html`. Open that file directly in a browser; no local server is needed.
 
+Surnames appear in capitals and slash-separated name variants are preserved.
+
 ## Coordinates
 
 GEDCOM places are names, so Gedver needs coordinates for map markers. Add them in the UI or import a JSON/CSV file. Coordinates are stored in browser local storage and can be exported again.

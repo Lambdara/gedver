@@ -108,7 +108,7 @@
   function parseIndividualRecord(record) {
     const id = normalizeXref(record.xref);
     const nameNode = firstChild(record, "NAME");
-    const name = parseName(nameNode ? valueWithContinuations(nameNode) : "");
+    const name = parseName(nameNode ? valueWithContinuations(nameNode) : "", nameNode);
     const sex = (firstChildValue(record, "SEX") || "").trim().toUpperCase();
     const familiesAsChild = children(record, "FAMC").map((node) => normalizeXref(valueWithContinuations(node)));
     const familiesAsSpouse = children(record, "FAMS").map((node) => normalizeXref(valueWithContinuations(node)));
@@ -155,7 +155,7 @@
     };
   }
 
-  function parseName(rawName) {
+  function parseName(rawName, node) {
     const raw = String(rawName || "").trim();
     if (!raw) {
       return {
@@ -167,7 +167,7 @@
       };
     }
 
-    const slashMatch = raw.match(/^(.*?)\/(.*?)\/(.*)$/);
+    const slashMatch = raw.match(/^(.*?)\s+\/(.*)\/(.*)$/) || raw.match(/^(.*?)\/(.*)\/(.*)$/);
     if (!slashMatch) {
       return {
         raw,
@@ -178,10 +178,13 @@
       };
     }
 
-    const given = slashMatch[1].trim();
-    const surname = slashMatch[2].trim();
-    const suffix = slashMatch[3].trim();
-    const display = [given, surname, suffix].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+    const clean = (value) => value.replace(/\s*\/\s*/g, "/").replace(/\s+/g, " ").trim();
+    const given = clean((node && firstChildValue(node, "GIVN")) || slashMatch[1]);
+    const surname = clean((node && firstChildValue(node, "SURN")) || slashMatch[2]);
+    const prefix = clean((node && firstChildValue(node, "SPFX")) || "");
+    const fullSurname = prefix && !surname.toLowerCase().startsWith(prefix.toLowerCase() + " ") ? `${prefix} ${surname}` : surname;
+    const suffix = clean(slashMatch[3]);
+    const display = [given, fullSurname.toLocaleUpperCase(), suffix].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 
     return {
       raw,
