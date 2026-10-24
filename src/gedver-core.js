@@ -28,7 +28,27 @@
     birth: "Birth",
     marriage: "Marriage",
     death: "Death",
+    baptism: "Baptism",
+    christening: "Christening",
+    burial: "Burial",
+    cremation: "Cremation",
+    residence: "Residence",
+    divorce: "Divorce",
+    engagement: "Engagement",
+    confirmation: "Confirmation",
+    occupation: "Occupation",
+    event: "Event",
+    fact: "Fact",
   };
+
+  const EVENT_TAGS = { BIRT: "birth", DEAT: "death", BAPM: "baptism", CHR: "christening", CHRA: "christening", BURI: "burial", CREM: "cremation", RESI: "residence", MARR: "marriage", DIV: "divorce", ENGA: "engagement", CONF: "confirmation", OCCU: "occupation", EVEN: "event", FACT: "fact" };
+
+  function parseFacts(record) {
+    return record.children.filter((node) => EVENT_TAGS[node.tag]).map((node, index) => ({
+      ...parseEventNode(node), type: EVENT_TAGS[node.tag], index,
+      label: firstChildValue(node, "TYPE") || EVENT_LABELS[EVENT_TAGS[node.tag]],
+    }));
+  }
 
   function parseGedcom(text) {
     const records = [];
@@ -119,6 +139,7 @@
       sex,
       familiesAsChild,
       familiesAsSpouse,
+      facts: parseFacts(record),
       birth: parseEventNode(firstChild(record, "BIRT")),
       death: parseEventNode(firstChild(record, "DEAT")),
     };
@@ -131,6 +152,7 @@
       husband: normalizeXref(firstChildValue(record, "HUSB")),
       wife: normalizeXref(firstChildValue(record, "WIFE")),
       children: children(record, "CHIL").map((node) => normalizeXref(valueWithContinuations(node))),
+      facts: parseFacts(record),
       marriage: parseEventNode(firstChild(record, "MARR")),
     };
   }
@@ -149,6 +171,7 @@
     const dateRaw = firstChildValue(node, "DATE");
     const place = normalizePlace(firstChildValue(node, "PLAC"));
     return {
+      details: node.value && node.value !== "Y" ? valueWithContinuations(node) : "",
       dateRaw,
       date: parseGedcomDate(dateRaw),
       place,
@@ -449,25 +472,36 @@
     const ancestry = settings.probandId ? computeAncestry(data, settings.probandId) : new Map();
     const useAncestryFilter = Boolean(settings.ancestryOnly && ancestry.size);
     const events = [];
+    const eventIds = new Set();
 
     for (const individual of data.individuals.values()) {
       const included = !useAncestryFilter || ancestry.has(individual.id);
       if (!included) continue;
 
-      if (settings.birth && eventHasPlace(individual.birth)) {
-        events.push(makeIndividualEvent("birth", individual, individual.birth, ancestry));
-      }
-      if (settings.death && eventHasPlace(individual.death)) {
-        events.push(makeIndividualEvent("death", individual, individual.death, ancestry));
+      for (const fact of individual.facts) {
+        if (settings[fact.type] === false) continue;
+        if (!settings.includeWithoutPlace && !eventHasPlace(fact)) continue;
+        const event = makeIndividualEvent(fact.type, individual, fact, ancestry);
+        if (eventIds.has(event.id)) event.id += `:${fact.index}`;
+        eventIds.add(event.id);
+        event.label = fact.label;
+        events.push(event);
       }
     }
 
     for (const family of data.families.values()) {
-      if (!settings.marriage || !eventHasPlace(family.marriage)) continue;
       const participantIds = [family.husband, family.wife].filter(Boolean);
       const included = !useAncestryFilter || participantIds.some((id) => ancestry.has(id));
       if (!included) continue;
-      events.push(makeFamilyEvent("marriage", family, data, family.marriage, ancestry));
+      for (const fact of family.facts) {
+        if (settings[fact.type] === false) continue;
+        if (!settings.includeWithoutPlace && !eventHasPlace(fact)) continue;
+        const event = makeFamilyEvent(fact.type, family, data, fact, ancestry);
+        if (eventIds.has(event.id)) event.id += `:${fact.index}`;
+        eventIds.add(event.id);
+        event.label = fact.label;
+        events.push(event);
+      }
     }
 
     return { events, ancestry };
@@ -489,6 +523,7 @@
       name: individual.name.display,
       date: event.date,
       dateLabel: event.date.display,
+      details: event.details,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -513,6 +548,7 @@
       name: names.join(" + ") || "(unnamed)",
       date: event.date,
       dateLabel: event.date.display,
+      details: event.details,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -560,6 +596,24 @@
       groups.get(place).events.push(event);
     }
     return Array.from(groups.values()).sort((a, b) => a.place.localeCompare(b.place));
+  }
+
+  function peopleAtLocation(group, allEvents, data, ancestry) {
+    const ids = new Set(group.events.flatMap((event) => event.people));
+    const byPerson = new Map([...ids].map((id) => [id, []]));
+    for (const event of allEvents) {
+      for (const id of event.people) {
+        if (byPerson.has(id)) byPerson.get(id).push(event);
+      }
+    }
+    const dateValue = (event) => event.date?.comparable ?? -Infinity;
+    return [...byPerson].map(([id, events]) => ({
+      id,
+      name: data.individuals.get(id)?.name.display || "(unnamed)",
+      relation: relationForIds([id], ancestry),
+      events: events.sort((a, b) => dateValue(b) - dateValue(a) || a.label.localeCompare(b.label)),
+      newestLocalDate: Math.max(...events.filter((event) => event.place === group.place).map(dateValue)),
+    })).sort((a, b) => b.newestLocalDate - a.newestLocalDate || a.name.localeCompare(b.name));
   }
 
   function findCoordinates(place, locations) {
@@ -709,6 +763,7 @@
     computeAncestry,
     extractEvents,
     groupEventsByLocation,
+    peopleAtLocation,
     groupRepresentativeEvent,
     colorContext,
     colorForGroup,

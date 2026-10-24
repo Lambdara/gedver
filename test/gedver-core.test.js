@@ -127,3 +127,43 @@ run("shows known date precision without question marks", () => {
   assert.equal(Core.parseGedcomDate("MAR 1793").display, "03-1793");
   assert.equal(Core.parseGedcomDate("").display, "");
 });
+
+run("groups people once with all their facts, newest local facts first", () => {
+  const data = Core.parseGedcom(`0 @I1@ INDI
+1 NAME Older /Person/
+1 BIRT
+2 DATE 1800
+2 PLAC Tolbert
+1 BAPM
+2 DATE 1801
+2 PLAC Tolbert
+1 DEAT
+2 DATE 1880
+2 PLAC Tolbert
+0 @I2@ INDI
+1 NAME Newer /Person/
+1 BIRT
+2 DATE 1900
+2 PLAC Tolbert
+1 DEAT
+2 DATE 1980
+2 PLAC Amsterdam
+1 BURI
+2 DATE 1981
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1850
+2 PLAC Elsewhere`);
+  const all = Core.extractEvents(data, { includeWithoutPlace: true });
+  const mapped = Core.extractEvents(data, {});
+  const group = Core.groupEventsByLocation(mapped.events, {}).find((g) => g.place === "Tolbert");
+  const people = Core.peopleAtLocation(group, all.events, data, all.ancestry);
+  assert.equal(people.length, 2);
+  assert.deepEqual(people.map((p) => p.id), ["I2", "I1"]);
+  assert.deepEqual(people[0].events.map((e) => e.type), ["burial", "death", "birth", "marriage"]);
+  assert.equal(people[1].events.filter((e) => e.place === "Tolbert").length, 3);
+  assert.equal(mapped.events.some((e) => e.type === "baptism"), true);
+  assert.equal(mapped.events.some((e) => e.type === "burial"), false);
+});

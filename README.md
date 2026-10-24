@@ -1,6 +1,6 @@
 # Gedver
 
-Gedver is an offline-first GEDCOM 5.5.1 lineage visualizer. It reads a local GEDCOM file in the browser, extracts birth, marriage, and death events, and plots event locations on a zoomable map.
+Gedver is an offline-first GEDCOM 5.5.1 lineage visualizer. It reads a local GEDCOM file in the browser, extracts birth, baptism, marriage, death and other facts, and plots event locations on a zoomable map.
 
 ## Build
 
@@ -10,11 +10,11 @@ npm run build
 
 The build writes `dist/gedver.html`. Open that file directly in a browser; no local server is needed.
 
-Surnames appear in capitals and slash-separated name variants are preserved. Partial dates show only the known year or month and year.
-
 ## Coordinates
 
 GEDCOM places are names, so Gedver needs coordinates for map markers. Add them in the UI or import a JSON/CSV file. Coordinates are stored in browser local storage and can be exported again. Click a place marker to view and edit its latitude and longitude in the right panel; save with Enter or the Update button. Clicking keeps that place selected while you move the mouse and scroll through its facts.
+
+The right panel groups facts by person. Facts in the selected place are highlighted; facts elsewhere are dark gray. People are sorted by their newest fact in the selected place, and each person’s facts are sorted newest first, with undated facts last. Surnames appear in capitals and partial dates show only the known year or month and year.
 
 JSON object format:
 

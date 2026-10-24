@@ -591,3 +591,6 @@ input[type="file"] {
 #selectedCoordinates { margin-top: 12px; }
 .coordinate-grid { align-items: end; }
 .coordinate-grid label { color: var(--muted); font-size: 12px; }
+.event-meta { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 4px; }
+.event-meta.is-local { color: var(--accent); font-weight: 600; }
+.event-meta.is-elsewhere { color: #555; }

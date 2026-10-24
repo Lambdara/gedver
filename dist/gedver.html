@@ -598,6 +598,9 @@ input[type="file"] {
 #selectedCoordinates { margin-top: 12px; }
 .coordinate-grid { align-items: end; }
 .coordinate-grid label { color: var(--muted); font-size: 12px; }
+.event-meta { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 4px; }
+.event-meta.is-local { color: var(--accent); font-weight: 600; }
+.event-meta.is-elsewhere { color: #555; }
     </style>
   </head>
   <body>
@@ -644,6 +647,10 @@ input[type="file"] {
           <label class="choice">
             <input id="filterDeath" type="checkbox" checked />
             <span>Death</span>
+          </label>
+          <label class="choice">
+            <input id="filterOther" type="checkbox" checked />
+            <span>Baptism and other facts</span>
           </label>
         </section>
 
@@ -723,7 +730,8 @@ input[type="file"] {
           <div id="selectedCoordinates"></div>
         </section>
         <section class="panel-section">
-          <h2>Events at location</h2>
+          <h2>People and facts</h2>
+          <p class="subtle">● Facts at this location · newest first</p>
           <div id="eventList" class="event-list"></div>
         </section>
       </aside>
@@ -766,7 +774,27 @@ window.GedverMapData = {
     birth: "Birth",
     marriage: "Marriage",
     death: "Death",
+    baptism: "Baptism",
+    christening: "Christening",
+    burial: "Burial",
+    cremation: "Cremation",
+    residence: "Residence",
+    divorce: "Divorce",
+    engagement: "Engagement",
+    confirmation: "Confirmation",
+    occupation: "Occupation",
+    event: "Event",
+    fact: "Fact",
   };
+
+  const EVENT_TAGS = { BIRT: "birth", DEAT: "death", BAPM: "baptism", CHR: "christening", CHRA: "christening", BURI: "burial", CREM: "cremation", RESI: "residence", MARR: "marriage", DIV: "divorce", ENGA: "engagement", CONF: "confirmation", OCCU: "occupation", EVEN: "event", FACT: "fact" };
+
+  function parseFacts(record) {
+    return record.children.filter((node) => EVENT_TAGS[node.tag]).map((node, index) => ({
+      ...parseEventNode(node), type: EVENT_TAGS[node.tag], index,
+      label: firstChildValue(node, "TYPE") || EVENT_LABELS[EVENT_TAGS[node.tag]],
+    }));
+  }
 
   function parseGedcom(text) {
     const records = [];
@@ -857,6 +885,7 @@ window.GedverMapData = {
       sex,
       familiesAsChild,
       familiesAsSpouse,
+      facts: parseFacts(record),
       birth: parseEventNode(firstChild(record, "BIRT")),
       death: parseEventNode(firstChild(record, "DEAT")),
     };
@@ -869,6 +898,7 @@ window.GedverMapData = {
       husband: normalizeXref(firstChildValue(record, "HUSB")),
       wife: normalizeXref(firstChildValue(record, "WIFE")),
       children: children(record, "CHIL").map((node) => normalizeXref(valueWithContinuations(node))),
+      facts: parseFacts(record),
       marriage: parseEventNode(firstChild(record, "MARR")),
     };
   }
@@ -887,6 +917,7 @@ window.GedverMapData = {
     const dateRaw = firstChildValue(node, "DATE");
     const place = normalizePlace(firstChildValue(node, "PLAC"));
     return {
+      details: node.value && node.value !== "Y" ? valueWithContinuations(node) : "",
       dateRaw,
       date: parseGedcomDate(dateRaw),
       place,
@@ -1187,25 +1218,36 @@ window.GedverMapData = {
     const ancestry = settings.probandId ? computeAncestry(data, settings.probandId) : new Map();
     const useAncestryFilter = Boolean(settings.ancestryOnly && ancestry.size);
     const events = [];
+    const eventIds = new Set();
 
     for (const individual of data.individuals.values()) {
       const included = !useAncestryFilter || ancestry.has(individual.id);
       if (!included) continue;
 
-      if (settings.birth && eventHasPlace(individual.birth)) {
-        events.push(makeIndividualEvent("birth", individual, individual.birth, ancestry));
-      }
-      if (settings.death && eventHasPlace(individual.death)) {
-        events.push(makeIndividualEvent("death", individual, individual.death, ancestry));
+      for (const fact of individual.facts) {
+        if (settings[fact.type] === false) continue;
+        if (!settings.includeWithoutPlace && !eventHasPlace(fact)) continue;
+        const event = makeIndividualEvent(fact.type, individual, fact, ancestry);
+        if (eventIds.has(event.id)) event.id += `:${fact.index}`;
+        eventIds.add(event.id);
+        event.label = fact.label;
+        events.push(event);
       }
     }
 
     for (const family of data.families.values()) {
-      if (!settings.marriage || !eventHasPlace(family.marriage)) continue;
       const participantIds = [family.husband, family.wife].filter(Boolean);
       const included = !useAncestryFilter || participantIds.some((id) => ancestry.has(id));
       if (!included) continue;
-      events.push(makeFamilyEvent("marriage", family, data, family.marriage, ancestry));
+      for (const fact of family.facts) {
+        if (settings[fact.type] === false) continue;
+        if (!settings.includeWithoutPlace && !eventHasPlace(fact)) continue;
+        const event = makeFamilyEvent(fact.type, family, data, fact, ancestry);
+        if (eventIds.has(event.id)) event.id += `:${fact.index}`;
+        eventIds.add(event.id);
+        event.label = fact.label;
+        events.push(event);
+      }
     }
 
     return { events, ancestry };
@@ -1227,6 +1269,7 @@ window.GedverMapData = {
       name: individual.name.display,
       date: event.date,
       dateLabel: event.date.display,
+      details: event.details,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -1251,6 +1294,7 @@ window.GedverMapData = {
       name: names.join(" + ") || "(unnamed)",
       date: event.date,
       dateLabel: event.date.display,
+      details: event.details,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -1298,6 +1342,24 @@ window.GedverMapData = {
       groups.get(place).events.push(event);
     }
     return Array.from(groups.values()).sort((a, b) => a.place.localeCompare(b.place));
+  }
+
+  function peopleAtLocation(group, allEvents, data, ancestry) {
+    const ids = new Set(group.events.flatMap((event) => event.people));
+    const byPerson = new Map([...ids].map((id) => [id, []]));
+    for (const event of allEvents) {
+      for (const id of event.people) {
+        if (byPerson.has(id)) byPerson.get(id).push(event);
+      }
+    }
+    const dateValue = (event) => event.date?.comparable ?? -Infinity;
+    return [...byPerson].map(([id, events]) => ({
+      id,
+      name: data.individuals.get(id)?.name.display || "(unnamed)",
+      relation: relationForIds([id], ancestry),
+      events: events.sort((a, b) => dateValue(b) - dateValue(a) || a.label.localeCompare(b.label)),
+      newestLocalDate: Math.max(...events.filter((event) => event.place === group.place).map(dateValue)),
+    })).sort((a, b) => b.newestLocalDate - a.newestLocalDate || a.name.localeCompare(b.name));
   }
 
   function findCoordinates(place, locations) {
@@ -1447,6 +1509,7 @@ window.GedverMapData = {
     computeAncestry,
     extractEvents,
     groupEventsByLocation,
+    peopleAtLocation,
     groupRepresentativeEvent,
     colorContext,
     colorForGroup,
@@ -1483,6 +1546,8 @@ window.GedverMapData = {
     locations: loadStoredLocations(),
     groups: [],
     visibleEvents: [],
+    allEvents: [],
+    ancestry: new Map(),
     selectedPlace: "",
     placeListMode: "unmapped",
     view: { ...DEFAULT_VIEW },
@@ -1500,6 +1565,7 @@ window.GedverMapData = {
     filterBirth: byId("filterBirth"),
     filterMarriage: byId("filterMarriage"),
     filterDeath: byId("filterDeath"),
+    filterOther: byId("filterOther"),
     colorLegend: byId("colorLegend"),
     colorLegendTitle: byId("colorLegendTitle"),
     colorLegendRamp: byId("colorLegendRamp"),
@@ -1548,6 +1614,7 @@ window.GedverMapData = {
     el.filterBirth.addEventListener("change", updateFilters);
     el.filterMarriage.addEventListener("change", updateFilters);
     el.filterDeath.addEventListener("change", updateFilters);
+    el.filterOther.addEventListener("change", () => recalculate(false));
     document.querySelectorAll("input[name='colorMode']").forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) {
@@ -1704,7 +1771,12 @@ window.GedverMapData = {
       ancestryOnly: state.ancestryOnly && Boolean(probandIndividualId),
       probandId: probandIndividualId,
     });
-    state.visibleEvents = result.events;
+    state.allEvents = Core.extractEvents(state.data, {
+      ancestryOnly: false, probandId: probandIndividualId, includeWithoutPlace: true,
+    }).events;
+    state.ancestry = result.ancestry;
+    state.visibleEvents = result.events.filter((event) =>
+      ["birth", "marriage", "death"].includes(event.type) || el.filterOther.checked);
     state.groups = Core.groupEventsByLocation(state.visibleEvents, state.locations);
 
     if (state.selectedPlace && !state.groups.some((group) => group.place === state.selectedPlace)) {
@@ -1776,7 +1848,8 @@ window.GedverMapData = {
       },
       { birth: 0, marriage: 0, death: 0 },
     );
-    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()}`;
+    const other = events.length - counts.birth - counts.marriage - counts.death;
+    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()} · Other facts ${other.toLocaleString()}`;
   }
 
   function renderColorLegend() {
@@ -1982,27 +2055,38 @@ window.GedverMapData = {
     el.selectedPlaceTitle.textContent = group.place;
     el.selectedPlaceMeta.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
     el.selectedCoordinates.append(renderCoordinateEditor(group, Boolean(group.coordinates)));
-    const sortedEvents = [...group.events].sort((a, b) => {
-      const dateA = a.date && a.date.comparable != null ? a.date.comparable : Number.POSITIVE_INFINITY;
-      const dateB = b.date && b.date.comparable != null ? b.date.comparable : Number.POSITIVE_INFINITY;
-      return dateA - dateB || a.name.localeCompare(b.name);
-    });
-
-    for (const event of sortedEvents) {
+    const people = Core.peopleAtLocation(group, state.allEvents, state.data, state.ancestry);
+    for (const person of people) {
       const row = document.createElement("div");
       row.className = "event-row";
       const name = document.createElement("strong");
-      name.textContent = event.name;
-      const meta = document.createElement("div");
-      meta.className = "event-meta";
-      const eventLine = document.createElement("span");
-      eventLine.textContent = `${event.label} · ${event.dateLabel || "No date"}`;
-      const relationLine = document.createElement("span");
-      relationLine.textContent = event.relation ? `Relation to proband: ${event.relation}` : "Relation to proband: not in ancestry";
-      const placeLine = document.createElement("span");
-      placeLine.textContent = event.place;
-      meta.append(eventLine, relationLine, placeLine);
-      row.append(name, meta);
+      name.textContent = person.name;
+      const relation = document.createElement("div");
+      relation.className = "subtle";
+      relation.textContent = person.relation ? `Relation to proband: ${person.relation}` : "Relation to proband: not in ancestry";
+      row.append(name, relation);
+      for (const event of person.events) {
+        const local = event.place === group.place;
+        const fact = document.createElement("div");
+        fact.className = `event-meta ${local ? "is-local" : "is-elsewhere"}`;
+        const line = document.createElement("span");
+        line.textContent = `${local ? "● " : ""}${event.label} · ${event.dateLabel || "No date"}`;
+        const place = document.createElement("span");
+        place.textContent = event.place || "Place unknown";
+        fact.append(line, place);
+        if (event.details) {
+          const details = document.createElement("span");
+          details.textContent = event.details;
+          fact.append(details);
+        }
+        if (event.type === "marriage") {
+          const partner = document.createElement("span");
+          partner.textContent = event.people.filter((id) => id !== person.id)
+            .map((id) => state.data.individuals.get(id)?.name.display || "(unnamed)").join(" + ");
+          fact.append(partner);
+        }
+        row.append(fact);
+      }
       el.eventList.append(row);
     }
   }

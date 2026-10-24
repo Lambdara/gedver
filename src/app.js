@@ -24,6 +24,8 @@
     locations: loadStoredLocations(),
     groups: [],
     visibleEvents: [],
+    allEvents: [],
+    ancestry: new Map(),
     selectedPlace: "",
     placeListMode: "unmapped",
     view: { ...DEFAULT_VIEW },
@@ -41,6 +43,7 @@
     filterBirth: byId("filterBirth"),
     filterMarriage: byId("filterMarriage"),
     filterDeath: byId("filterDeath"),
+    filterOther: byId("filterOther"),
     colorLegend: byId("colorLegend"),
     colorLegendTitle: byId("colorLegendTitle"),
     colorLegendRamp: byId("colorLegendRamp"),
@@ -89,6 +92,7 @@
     el.filterBirth.addEventListener("change", updateFilters);
     el.filterMarriage.addEventListener("change", updateFilters);
     el.filterDeath.addEventListener("change", updateFilters);
+    el.filterOther.addEventListener("change", () => recalculate(false));
     document.querySelectorAll("input[name='colorMode']").forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) {
@@ -245,7 +249,12 @@
       ancestryOnly: state.ancestryOnly && Boolean(probandIndividualId),
       probandId: probandIndividualId,
     });
-    state.visibleEvents = result.events;
+    state.allEvents = Core.extractEvents(state.data, {
+      ancestryOnly: false, probandId: probandIndividualId, includeWithoutPlace: true,
+    }).events;
+    state.ancestry = result.ancestry;
+    state.visibleEvents = result.events.filter((event) =>
+      ["birth", "marriage", "death"].includes(event.type) || el.filterOther.checked);
     state.groups = Core.groupEventsByLocation(state.visibleEvents, state.locations);
 
     if (state.selectedPlace && !state.groups.some((group) => group.place === state.selectedPlace)) {
@@ -317,7 +326,8 @@
       },
       { birth: 0, marriage: 0, death: 0 },
     );
-    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()}`;
+    const other = events.length - counts.birth - counts.marriage - counts.death;
+    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()} · Other facts ${other.toLocaleString()}`;
   }
 
   function renderColorLegend() {
@@ -523,27 +533,38 @@
     el.selectedPlaceTitle.textContent = group.place;
     el.selectedPlaceMeta.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
     el.selectedCoordinates.append(renderCoordinateEditor(group, Boolean(group.coordinates)));
-    const sortedEvents = [...group.events].sort((a, b) => {
-      const dateA = a.date && a.date.comparable != null ? a.date.comparable : Number.POSITIVE_INFINITY;
-      const dateB = b.date && b.date.comparable != null ? b.date.comparable : Number.POSITIVE_INFINITY;
-      return dateA - dateB || a.name.localeCompare(b.name);
-    });
-
-    for (const event of sortedEvents) {
+    const people = Core.peopleAtLocation(group, state.allEvents, state.data, state.ancestry);
+    for (const person of people) {
       const row = document.createElement("div");
       row.className = "event-row";
       const name = document.createElement("strong");
-      name.textContent = event.name;
-      const meta = document.createElement("div");
-      meta.className = "event-meta";
-      const eventLine = document.createElement("span");
-      eventLine.textContent = `${event.label} · ${event.dateLabel || "No date"}`;
-      const relationLine = document.createElement("span");
-      relationLine.textContent = event.relation ? `Relation to proband: ${event.relation}` : "Relation to proband: not in ancestry";
-      const placeLine = document.createElement("span");
-      placeLine.textContent = event.place;
-      meta.append(eventLine, relationLine, placeLine);
-      row.append(name, meta);
+      name.textContent = person.name;
+      const relation = document.createElement("div");
+      relation.className = "subtle";
+      relation.textContent = person.relation ? `Relation to proband: ${person.relation}` : "Relation to proband: not in ancestry";
+      row.append(name, relation);
+      for (const event of person.events) {
+        const local = event.place === group.place;
+        const fact = document.createElement("div");
+        fact.className = `event-meta ${local ? "is-local" : "is-elsewhere"}`;
+        const line = document.createElement("span");
+        line.textContent = `${local ? "● " : ""}${event.label} · ${event.dateLabel || "No date"}`;
+        const place = document.createElement("span");
+        place.textContent = event.place || "Place unknown";
+        fact.append(line, place);
+        if (event.details) {
+          const details = document.createElement("span");
+          details.textContent = event.details;
+          fact.append(details);
+        }
+        if (event.type === "marriage") {
+          const partner = document.createElement("span");
+          partner.textContent = event.people.filter((id) => id !== person.id)
+            .map((id) => state.data.individuals.get(id)?.name.display || "(unnamed)").join(" + ");
+          fact.append(partner);
+        }
+        row.append(fact);
+      }
       el.eventList.append(row);
     }
   }
