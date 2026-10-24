@@ -587,3 +587,7 @@ input[type="file"] {
     grid-column: 1 / -1;
   }
 }
+
+#selectedCoordinates { margin-top: 12px; }
+.coordinate-grid { align-items: end; }
+.coordinate-grid label { color: var(--muted); font-size: 12px; }

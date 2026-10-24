@@ -14,7 +14,7 @@ Surnames appear in capitals and slash-separated name variants are preserved. Par
 
 ## Coordinates
 
-GEDCOM places are names, so Gedver needs coordinates for map markers. Add them in the UI or import a JSON/CSV file. Coordinates are stored in browser local storage and can be exported again.
+GEDCOM places are names, so Gedver needs coordinates for map markers. Add them in the UI or import a JSON/CSV file. Coordinates are stored in browser local storage and can be exported again. Click a place marker to view and edit its latitude and longitude in the right panel; save with Enter or the Update button.
 
 JSON object format:
 

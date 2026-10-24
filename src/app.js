@@ -67,6 +67,7 @@
     selectedPlaceTitle: byId("selectedPlaceTitle"),
     selectedPlaceMeta: byId("selectedPlaceMeta"),
     eventList: byId("eventList"),
+    selectedCoordinates: byId("selectedCoordinates"),
   };
 
   function byId(id) {
@@ -424,28 +425,7 @@
     header.append(title, count);
     row.append(header);
 
-    const grid = document.createElement("div");
-    grid.className = "coordinate-grid";
-    const lat = document.createElement("input");
-    lat.type = "number";
-    lat.step = "any";
-    lat.min = "-90";
-    lat.max = "90";
-    lat.placeholder = "Latitude";
-    lat.value = group.coordinates ? group.coordinates.lat : "";
-    const lng = document.createElement("input");
-    lng.type = "number";
-    lng.step = "any";
-    lng.min = "-180";
-    lng.max = "180";
-    lng.placeholder = "Longitude";
-    lng.value = group.coordinates ? group.coordinates.lng : "";
-    const save = document.createElement("button");
-    save.type = "button";
-    save.textContent = isMapped ? "Update" : "Save";
-    save.addEventListener("click", () => saveCoordinate(group.place, lat.value, lng.value));
-    grid.append(lat, lng, save);
-    row.append(grid);
+    row.append(renderCoordinateEditor(group, isMapped));
 
     if (isMapped) {
       const actions = document.createElement("div");
@@ -465,16 +445,54 @@
     return row;
   }
 
+  function renderCoordinateEditor(group, isMapped) {
+    const grid = document.createElement("form");
+    grid.className = "coordinate-grid";
+    const lat = document.createElement("input");
+    lat.type = "number";
+    lat.step = "any";
+    lat.min = "-90";
+    lat.max = "90";
+    lat.required = true;
+    lat.setAttribute("aria-label", `Latitude for ${group.place}`);
+    lat.placeholder = "Latitude";
+    lat.value = group.coordinates ? group.coordinates.lat : "";
+    const lng = document.createElement("input");
+    lng.type = "number";
+    lng.step = "any";
+    lng.min = "-180";
+    lng.max = "180";
+    lng.required = true;
+    lng.setAttribute("aria-label", `Longitude for ${group.place}`);
+    lng.placeholder = "Longitude";
+    lng.value = group.coordinates ? group.coordinates.lng : "";
+    const save = document.createElement("button");
+    save.type = "submit";
+    save.textContent = isMapped ? "Update" : "Save";
+    grid.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveCoordinate(group.place, lat.value, lng.value);
+    });
+    const latLabel = document.createElement("label");
+    latLabel.textContent = "Latitude";
+    latLabel.append(lat);
+    const lngLabel = document.createElement("label");
+    lngLabel.textContent = "Longitude";
+    lngLabel.append(lng);
+    grid.append(latLabel, lngLabel, save);
+    return grid;
+  }
+
   function saveCoordinate(place, latValue, lngValue) {
     const lat = Number(latValue);
     const lng = Number(lngValue);
-    if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
+    if (!String(latValue).trim() || !String(lngValue).trim() || !Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
       showStatus("Coordinates must be valid latitude and longitude values");
       return;
     }
     state.locations[place] = { lat, lng };
     saveStoredLocations(state.locations);
-    recalculate(true);
+    recalculate(false);
   }
 
   function removeCoordinate(place) {
@@ -494,6 +512,7 @@
   function renderSidebar() {
     const group = state.groups.find((item) => item.place === state.selectedPlace) || null;
     el.eventList.innerHTML = "";
+    el.selectedCoordinates.innerHTML = "";
 
     if (!group) {
       el.selectedPlaceTitle.textContent = "No location selected";
@@ -503,6 +522,7 @@
 
     el.selectedPlaceTitle.textContent = group.place;
     el.selectedPlaceMeta.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
+    el.selectedCoordinates.append(renderCoordinateEditor(group, Boolean(group.coordinates)));
     const sortedEvents = [...group.events].sort((a, b) => {
       const dateA = a.date && a.date.comparable != null ? a.date.comparable : Number.POSITIVE_INFINITY;
       const dateB = b.date && b.date.comparable != null ? b.date.comparable : Number.POSITIVE_INFINITY;
@@ -1005,7 +1025,8 @@
     if (rawLng == null) rawLng = source.long;
     if (rawLng == null) rawLng = source.longitude;
     const lng = Number(rawLng);
-    if (!Number.isFinite(lat) || lat < -90 || lat > 90) return null;
+    if (source.lat == null && source.latitude == null) return null;
+    if (rawLng == null || !Number.isFinite(lat) || lat < -90 || lat > 90) return null;
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) return null;
     return { lat, lng };
   }
