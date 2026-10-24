@@ -48,7 +48,7 @@ run("parses individuals, families, names, places, and dates", () => {
 
 run("uses earliest date from ranges and supports partial dates", () => {
   assert.equal(Core.parseGedcomDate("BET 2 FEB 1900 AND 4 MAR 1902").display, "02-02-1900");
-  assert.equal(Core.parseGedcomDate("ABT 1900").display, "??-??-1900");
+  assert.equal(Core.parseGedcomDate("ABT 1900").display, "1900");
   assert.equal(Core.parseGedcomDate("03-04-1729").display, "03-04-1729");
 });
 
@@ -120,4 +120,10 @@ run("preserves slash variants and capitalizes surnames", () => {
   assert.equal(data.individuals.get("I1").name.display, "Trijntje Pieters BUREMA/BUURMA");
   assert.equal(data.individuals.get("I2").name.display, "Hendrik/Hindrik VAN DER MOLEN");
   assert.equal(data.individuals.get("I3").name.display, "Hendrik/Hindrik VAN DER MOLEN");
+});
+
+run("shows known date precision without question marks", () => {
+  assert.equal(Core.parseGedcomDate("1793").display, "1793");
+  assert.equal(Core.parseGedcomDate("MAR 1793").display, "03-1793");
+  assert.equal(Core.parseGedcomDate("").display, "");
 });

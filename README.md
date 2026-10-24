@@ -10,7 +10,7 @@ npm run build
 
 The build writes `dist/gedver.html`. Open that file directly in a browser; no local server is needed.
 
-Surnames appear in capitals and slash-separated name variants are preserved.
+Surnames appear in capitals and slash-separated name variants are preserved. Partial dates show only the known year or month and year.
 
 ## Coordinates
 

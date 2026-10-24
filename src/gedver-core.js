@@ -346,6 +346,8 @@
   }
 
   function formatDatePart(part) {
+    if (part.month == null) return String(part.year).padStart(4, "0");
+    if (part.day == null) return `${String(part.month).padStart(2, "0")}-${String(part.year).padStart(4, "0")}`;
     const day = part.day == null ? "??" : String(part.day).padStart(2, "0");
     const month = part.month == null ? "??" : String(part.month).padStart(2, "0");
     return `${day}-${month}-${String(part.year).padStart(4, "0")}`;
