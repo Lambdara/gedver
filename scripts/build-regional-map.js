@@ -12,7 +12,7 @@ const sourceUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json
 const admin1SourceUrl = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson";
 const lakesSourceUrl = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_lakes.geojson";
 
-const SELECTED_COUNTRIES = new Set(["Germany", "Netherlands"]);
+const SELECTED_COUNTRIES = new Set(["Germany", "Netherlands", "United Kingdom", "Luxembourg", "Belgium"]);
 const SELECTED_PROVINCES = new Set([
   "Drenthe",
   "Flevoland",
@@ -28,7 +28,7 @@ const SELECTED_PROVINCES = new Set([
   "Zuid-Holland",
 ]);
 const SELECTED_LAKES = new Set(["IJsselmeer"]);
-const REGION_BOUNDS = { minLng: 2.5, minLat: 47, maxLng: 15.6, maxLat: 55.2 };
+const REGION_BOUNDS = { minLng: -8.7, minLat: 47, maxLng: 15.6, maxLat: 61 };
 
 const DETAIL_LEVELS = [
   { id: "overview", minZoom: 4.4, minPointDelta: 0.035 },
@@ -38,6 +38,24 @@ const DETAIL_LEVELS = [
 ];
 
 const LABELS = [
+  ["London", 51.5074, -0.1278, 4.8, 1],
+  ["Birmingham", 52.4862, -1.8904, 5.5, 2],
+  ["Manchester", 53.4808, -2.2426, 5.5, 2],
+  ["Liverpool", 53.4084, -2.9916, 6.0, 2],
+  ["Leeds", 53.8008, -1.5491, 6.0, 2],
+  ["Newcastle upon Tyne", 54.9783, -1.6178, 6.2, 3],
+  ["Bristol", 51.4545, -2.5879, 6.2, 3],
+  ["Edinburgh", 55.9533, -3.1883, 5.5, 2],
+  ["Glasgow", 55.8642, -4.2518, 5.5, 2],
+  ["Cardiff", 51.4816, -3.1791, 6.0, 2],
+  ["Belfast", 54.5973, -5.9301, 6.0, 2],
+  ["Bruxelles / Brussel", 50.8503, 4.3517, 5.0, 1],
+  ["Antwerpen", 51.2194, 4.4025, 5.8, 2],
+  ["Gent", 51.0543, 3.7174, 6.2, 3],
+  ["Brugge", 51.2093, 3.2247, 6.5, 3],
+  ["Liège", 50.6326, 5.5797, 6.2, 3],
+  ["Namur", 50.4674, 4.872, 6.8, 3],
+  ["Lëtzebuerg", 49.6116, 6.1319, 5.5, 2],
   ["Amsterdam", 52.3676, 4.9041, 4.8, 1],
   ["Berlin", 52.52, 13.405, 4.8, 1],
   ["Hamburg", 53.5511, 9.9937, 5.0, 1],
@@ -167,7 +185,7 @@ async function main() {
   }));
 
   const output = {
-    name: "Netherlands and Germany 10m",
+    name: "Northwest Europe 10m",
     bbox: bboxForPolygons([...sourceCountries, ...sourceProvinces, ...sourceWater]),
     levels,
     labels: LABELS.map(([name, lat, lng, minZoom, rank]) => ({ name, lat, lng, minZoom, rank })).sort(

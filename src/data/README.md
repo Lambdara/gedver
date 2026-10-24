@@ -1,6 +1,6 @@
 # Basemap Data
 
-`northwest-europe-10m.json` is a generated regional detail pack derived from the `world-atlas` 1:10m countries TopoJSON dataset. It contains European Netherlands and Germany country geometry at several precomputed detail levels plus built-in major city labels, so the app can zoom into the Netherlands/Germany area without embedding or rendering the full 10m world map.
+`northwest-europe-10m.json` is a generated regional detail pack derived from the `world-atlas` 1:10m countries TopoJSON dataset. It contains European Netherlands, Germany, United Kingdom, Belgium and Luxembourg country geometry at several precomputed detail levels plus built-in major city labels, so the app can zoom into the northwest European area without embedding or rendering the full 10m world map.
 
 To regenerate the regional pack during development:
 

@@ -35,4 +35,4 @@ Private GEDCOM files and local coordinate tables are ignored by `.gitignore`.
 
 ## Offline map
 
-The page includes a built-in offline vector basemap focused on the Netherlands and Germany, with zoom-adaptive borders and major city labels. All parsing, filtering, saved coordinates, zooming, panning, and markers work without network access.
+The page includes a built-in offline vector basemap covering the Netherlands, Germany, the United Kingdom, Belgium and Luxembourg, with zoom-adaptive borders and major city labels. All parsing, filtering, saved coordinates, zooming, panning, and markers work without network access.
