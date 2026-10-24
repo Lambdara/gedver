@@ -167,3 +167,40 @@ run("groups people once with all their facts, newest local facts first", () => {
   assert.equal(mapped.events.some((e) => e.type === "baptism"), true);
   assert.equal(mapped.events.some((e) => e.type === "burial"), false);
 });
+
+run("merges exact coordinates while preserving event names and per-person ordering", () => {
+  const data = Core.parseGedcom(`0 @I1@ INDI
+1 NAME First /Person/
+1 BIRT
+2 DATE 1800
+2 PLAC Old name
+1 DEAT
+2 DATE 1900
+2 PLAC New name
+0 @I2@ INDI
+1 NAME Second /Person/
+1 BIRT
+2 DATE 1850
+2 PLAC Other name
+1 DEAT
+2 DATE 2000
+2 PLAC Nearby`);
+  const { events, ancestry } = Core.extractEvents(data, {});
+  const groups = Core.groupEventsByLocation(events, {
+    "Old name": { lat: 53, lng: 6 },
+    "New name": { lat: "53.0", lng: "6.000" },
+    "Other name": { lat: 53, lng: 6 },
+    Nearby: { lat: 53.000001, lng: 6 },
+  });
+  const merged = Core.mergeLocationGroups(groups);
+  assert.equal(groups.length, 4, "coordinate editing retains separate original names");
+  assert.equal(merged.length, 2, "nearby coordinates remain separate");
+  const shared = merged.find((group) => group.events.length === 3);
+  assert.equal(shared.place, "New name/Old name/Other name");
+  assert.deepEqual(shared.events.map((event) => event.place).sort(), ["New name", "Old name", "Other name"]);
+  assert.equal(Core.eventAtLocation(events.find((event) => event.place === "Old name"), shared), true);
+  const people = Core.peopleAtLocation(shared, events, data, ancestry);
+  assert.deepEqual(people.map((person) => person.id), ["I1", "I2"], "sort by newest fact at any alias, excluding facts elsewhere");
+  assert.equal(people[0].events.length, 2, "person with two aliases appears once");
+  assert.equal(Core.mergeLocationGroups(Core.groupEventsByLocation(events, {})).length, 4, "unmapped places stay separate");
+});

@@ -14,6 +14,8 @@ The build writes `dist/gedver.html`. Open that file directly in a browser; no lo
 
 GEDCOM places are names, so Gedver needs coordinates for map markers. Add them in the UI or import a JSON/CSV file. Coordinates are stored in browser local storage and can be exported again. Click a place marker to view and edit its latitude and longitude in the right panel; save with Enter or the Update button. Clicking keeps that place selected while you move the mouse and scroll through its facts.
 
+Places with identical coordinates share one map marker and a title with their names separated by `/`. Each fact retains its original place name. Editing coordinates in this shared view updates all displayed aliases; the coordinate list still lets you edit each place separately.
+
 The right panel groups facts by person. Facts in the selected place are highlighted; facts elsewhere are dark gray. People are sorted by their newest fact in the selected place, and each person’s facts are sorted newest first, with undated facts last. Surnames appear in capitals and partial dates show only the known year or month and year.
 
 JSON object format:

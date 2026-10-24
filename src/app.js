@@ -23,6 +23,7 @@
     singleColor: "#d7263d",
     locations: loadStoredLocations(),
     groups: [],
+    viewerGroups: [],
     visibleEvents: [],
     allEvents: [],
     ancestry: new Map(),
@@ -239,6 +240,7 @@
     if (!state.data) {
       state.visibleEvents = [];
       state.groups = [];
+      state.viewerGroups = [];
       renderAll();
       return;
     }
@@ -255,10 +257,14 @@
     state.ancestry = result.ancestry;
     state.visibleEvents = result.events.filter((event) =>
       ["birth", "marriage", "death"].includes(event.type) || el.filterOther.checked);
+    const previousSelection = state.viewerGroups.find((group) => group.places.includes(state.selectedPlace));
     state.groups = Core.groupEventsByLocation(state.visibleEvents, state.locations);
 
-    if (state.selectedPlace && !state.groups.some((group) => group.place === state.selectedPlace)) {
-      state.selectedPlace = "";
+    state.viewerGroups = Core.mergeLocationGroups(state.groups);
+    if (state.selectedPlace && !state.viewerGroups.some((group) => group.places.includes(state.selectedPlace))) {
+      const replacement = state.viewerGroups.find((group) =>
+        group.places.some((place) => previousSelection?.places.includes(place)));
+      state.selectedPlace = replacement ? replacement.places[0] : "";
     }
 
     renderAll();
@@ -481,7 +487,7 @@
     save.textContent = isMapped ? "Update" : "Save";
     grid.addEventListener("submit", (event) => {
       event.preventDefault();
-      saveCoordinate(group.place, lat.value, lng.value);
+      saveCoordinate(group.places || [group.place], lat.value, lng.value);
     });
     const latLabel = document.createElement("label");
     latLabel.textContent = "Latitude";
@@ -493,14 +499,14 @@
     return grid;
   }
 
-  function saveCoordinate(place, latValue, lngValue) {
+  function saveCoordinate(places, latValue, lngValue) {
     const lat = Number(latValue);
     const lng = Number(lngValue);
     if (!String(latValue).trim() || !String(lngValue).trim() || !Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
       showStatus("Coordinates must be valid latitude and longitude values");
       return;
     }
-    state.locations[place] = { lat, lng };
+    for (const place of places) state.locations[place] = { lat, lng };
     saveStoredLocations(state.locations);
     recalculate(false);
   }
@@ -520,7 +526,7 @@
   }
 
   function renderSidebar() {
-    const group = state.groups.find((item) => item.place === state.selectedPlace) || null;
+    const group = state.viewerGroups.find((item) => item.places.includes(state.selectedPlace)) || null;
     el.eventList.innerHTML = "";
     el.selectedCoordinates.innerHTML = "";
 
@@ -533,7 +539,7 @@
     el.selectedPlaceTitle.textContent = group.place;
     el.selectedPlaceMeta.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
     el.selectedCoordinates.append(renderCoordinateEditor(group, Boolean(group.coordinates)));
-    const people = Core.peopleAtLocation(group, state.allEvents, state.data, state.ancestry);
+    const people = Core.peopleAtLocation(group, state.allEvents, state.data, state.ancestry, state.locations);
     for (const person of people) {
       const row = document.createElement("div");
       row.className = "event-row";
@@ -544,7 +550,7 @@
       relation.textContent = person.relation ? `Relation to proband: ${person.relation}` : "Relation to proband: not in ancestry";
       row.append(name, relation);
       for (const event of person.events) {
-        const local = event.place === group.place;
+        const local = Core.eventAtLocation(event, group, state.locations);
         const fact = document.createElement("div");
         fact.className = `event-meta ${local ? "is-local" : "is-elsewhere"}`;
         const line = document.createElement("span");
@@ -775,7 +781,7 @@
 
   function renderMarkers(width, height) {
     el.markerLayer.innerHTML = "";
-    const mappedGroups = state.groups.filter((group) => group.coordinates);
+    const mappedGroups = state.viewerGroups.filter((group) => group.coordinates);
     el.mapEmpty.classList.toggle("hidden", mappedGroups.length > 0);
     const context = Core.colorContext(state.visibleEvents, state.singleColor);
 
@@ -785,7 +791,7 @@
 
       const marker = document.createElementNS("http://www.w3.org/2000/svg", "g");
       marker.classList.add("marker");
-      if (group.place === state.selectedPlace) marker.classList.add("is-selected");
+      if (group.places.includes(state.selectedPlace)) marker.classList.add("is-selected");
       marker.setAttribute("transform", `translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})`);
       marker.setAttribute("tabindex", "0");
       marker.setAttribute("role", "button");
@@ -801,11 +807,11 @@
       title.textContent = `${group.place}: ${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
 
       marker.append(title, circle, text);
-      marker.addEventListener("click", () => selectPlace(group.place));
+      marker.addEventListener("click", () => selectPlace(group.places[0]));
       marker.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          selectPlace(group.place);
+          selectPlace(group.places[0]);
         }
       });
       el.markerLayer.append(marker);

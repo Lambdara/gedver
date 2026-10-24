@@ -598,7 +598,37 @@
     return Array.from(groups.values()).sort((a, b) => a.place.localeCompare(b.place));
   }
 
-  function peopleAtLocation(group, allEvents, data, ancestry) {
+  function mergeLocationGroups(groups) {
+    const merged = new Map();
+    for (const group of groups) {
+      // Use exact numeric coordinates; nearby places must remain separate.
+      const key = group.coordinates
+        ? `coordinates:${Number(group.coordinates.lat)},${Number(group.coordinates.lng)}`
+        : `place:${group.place}`;
+      if (!merged.has(key)) {
+        merged.set(key, { ...group, places: [], events: [] });
+      }
+      const target = merged.get(key);
+      target.places.push(group.place);
+      target.events.push(...group.events);
+    }
+    for (const group of merged.values()) {
+      group.places.sort((a, b) => a.localeCompare(b));
+      group.place = group.places.join("/");
+    }
+    return [...merged.values()].sort((a, b) => a.place.localeCompare(b.place));
+  }
+
+  function eventAtLocation(event, group, locations) {
+    if ((group.places || [group.place]).includes(normalizePlace(event.place))) return true;
+    // A filtered-out alias can still occur in the person's full fact list.
+    const coordinates = locations && findCoordinates(event.place, locations);
+    return Boolean(coordinates && group.coordinates &&
+      Number(coordinates.lat) === Number(group.coordinates.lat) &&
+      Number(coordinates.lng) === Number(group.coordinates.lng));
+  }
+
+  function peopleAtLocation(group, allEvents, data, ancestry, locations) {
     const ids = new Set(group.events.flatMap((event) => event.people));
     const byPerson = new Map([...ids].map((id) => [id, []]));
     for (const event of allEvents) {
@@ -612,7 +642,7 @@
       name: data.individuals.get(id)?.name.display || "(unnamed)",
       relation: relationForIds([id], ancestry),
       events: events.sort((a, b) => dateValue(b) - dateValue(a) || a.label.localeCompare(b.label)),
-      newestLocalDate: Math.max(...events.filter((event) => event.place === group.place).map(dateValue)),
+      newestLocalDate: Math.max(...events.filter((event) => eventAtLocation(event, group, locations)).map(dateValue)),
     })).sort((a, b) => b.newestLocalDate - a.newestLocalDate || a.name.localeCompare(b.name));
   }
 
@@ -763,6 +793,8 @@
     computeAncestry,
     extractEvents,
     groupEventsByLocation,
+    mergeLocationGroups,
+    eventAtLocation,
     peopleAtLocation,
     groupRepresentativeEvent,
     colorContext,

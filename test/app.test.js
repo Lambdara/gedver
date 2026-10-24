@@ -70,3 +70,42 @@ assert.equal(JSON.parse(stored['gedver.locations.v1']).Tolbert.lat, 53.18, 'coor
 marker('Amsterdam').dispatch('keydown', { key: 'Enter' });
 assert.equal(node('selectedPlaceTitle').textContent, 'Amsterdam');
 console.log('ok - app selection, grouped facts, saved coordinates, submit and import');
+
+node('locationFile').files = [{ name: 'aliases.json', text: JSON.stringify({
+  Tolbert: { lat: 53.18, lng: 6.37 },
+  'Old Tolbert': { lat: 53.18, lng: 6.37 },
+  'Historic Tolbert': { lat: '53.180', lng: '6.370' },
+}) }];
+node('locationFile').dispatch('change');
+node('gedcomFile').files = [{ name: 'aliases.ged', text: `0 @I1@ INDI
+1 NAME First /Person/
+1 BIRT
+2 DATE 1793
+2 PLAC Old Tolbert
+1 BAPM
+2 DATE 1794
+2 PLAC Historic Tolbert
+1 DEAT
+2 DATE 1870
+2 PLAC Tolbert` }];
+node('gedcomFile').dispatch('change');
+assert.equal(node('markerLayer').children.length, 1, 'identical coordinates produce one marker');
+marker('Historic Tolbert/Old Tolbert/Tolbert').dispatch('click');
+assert.equal(node('selectedPlaceTitle').textContent, 'Historic Tolbert/Old Tolbert/Tolbert');
+assert.equal(node('selectedPlaceMeta').textContent, '3 events');
+assert.equal(node('eventList').children.length, 1, 'aliases share a single person card');
+const aliasFacts = node('eventList').children[0].children.slice(2);
+assert.deepEqual(aliasFacts.map((fact) => fact.children[1].textContent), ['Tolbert', 'Historic Tolbert', 'Old Tolbert']);
+assert.ok(aliasFacts.every((fact) => fact.className.includes('is-local')), 'all aliases count as local');
+const aliasForm = node('selectedCoordinates').children[0];
+aliasForm.children[0].children[0].value = '53.18001';
+aliasForm.dispatch('submit');
+const updated = JSON.parse(stored['gedver.locations.v1']);
+for (const name of ['Tolbert', 'Old Tolbert', 'Historic Tolbert']) assert.equal(updated[name].lat, 53.18001);
+assert.equal(updated['Historic Tolbert/Old Tolbert/Tolbert'], undefined, 'combined title is never stored as a place');
+assert.equal(node('markerLayer').children.length, 1);
+node('filterOther').checked = false;
+node('filterOther').dispatch('change');
+assert.equal(node('selectedPlaceTitle').textContent, 'Old Tolbert/Tolbert', 'selection survives an alias being filtered out');
+assert.ok(node('eventList').children[0].children.slice(2).every((fact) => fact.className.includes('is-local')), 'filtered aliases remain local in the full fact list');
+console.log('ok - merged location marker, title, original facts, coordinate edits and selection');
