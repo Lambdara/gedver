@@ -781,7 +781,6 @@
 
       marker.append(title, circle, text);
       marker.addEventListener("click", () => selectPlace(group.place));
-      marker.addEventListener("mouseenter", () => selectPlace(group.place));
       marker.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
