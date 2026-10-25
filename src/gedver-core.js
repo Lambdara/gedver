@@ -39,15 +39,34 @@
     occupation: "Occupation",
     event: "Event",
     fact: "Fact",
+    partnership: "Partnership",
+    funeral: "Funeral",
+    marriageBanns: "Marriage banns",
+    scattering: "Scattering of ashes",
+    emancipation: "Emancipation",
   };
 
   const EVENT_TAGS = { BIRT: "birth", DEAT: "death", BAPM: "baptism", CHR: "christening", CHRA: "christening", BURI: "burial", CREM: "cremation", RESI: "residence", MARR: "marriage", DIV: "divorce", ENGA: "engagement", CONF: "confirmation", OCCU: "occupation", EVEN: "event", FACT: "fact" };
 
+  const FACT_ALIASES = {
+    "myheritage:rel_partners": "partnership", partners: "partnership", partnership: "partnership",
+    geboorte: "birth", doop: "baptism", huwelijk: "marriage", overlijden: "death",
+    beroep: "occupation", begrafenis: "burial", crematie: "cremation", cremation: "cremation",
+    ondertrouw: "marriageBanns", "marriage banns": "marriageBanns", uitstrooien: "scattering",
+    "scattering of ashes": "scattering", handlichting: "emancipation", emancipation: "emancipation",
+    funeral: "funeral", uitvaart: "funeral", verloving: "engagement", scheiding: "divorce",
+  };
+
   function parseFacts(record) {
-    return record.children.filter((node) => EVENT_TAGS[node.tag]).map((node, index) => ({
-      ...parseEventNode(node), type: EVENT_TAGS[node.tag], index,
-      label: firstChildValue(node, "TYPE") || EVENT_LABELS[EVENT_TAGS[node.tag]],
-    }));
+    return record.children.filter((node) => EVENT_TAGS[node.tag]).map((node, index) => {
+      const customLabel = firstChildValue(node, "TYPE");
+      const knownType = Object.hasOwn(FACT_ALIASES, customLabel.toLowerCase()) ? FACT_ALIASES[customLabel.toLowerCase()] : "";
+      const type = knownType || EVENT_TAGS[node.tag];
+      return {
+        ...parseEventNode(node), type, index,
+        label: knownType ? EVENT_LABELS[type] : customLabel || EVENT_LABELS[type],
+      };
+    });
   }
 
   function parseGedcom(text) {
@@ -172,6 +191,7 @@
     const place = normalizePlace(firstChildValue(node, "PLAC"));
     return {
       details: node.value && node.value !== "Y" ? valueWithContinuations(node) : "",
+      notes: children(node, "NOTE").map(valueWithContinuations).filter((value) => !/^@.*@$/.test(value)).join("; "),
       dateRaw,
       date: parseGedcomDate(dateRaw),
       place,
@@ -292,8 +312,9 @@
       }
     }
 
-    const start = parseDatePart(startText);
-    const end = endText ? parseDatePart(endText) : null;
+    const stripQualifier = (text) => text.replace(/^(?:BEF|BEFORE|AFT|AFTER|ABT|ABOUT|CAL|CALCULATED|EST|ESTIMATED)\s+/, "");
+    const start = parseDatePart(stripQualifier(startText));
+    const end = endText ? parseDatePart(stripQualifier(endText)) : null;
 
     return {
       raw: original,
@@ -301,7 +322,7 @@
       start,
       end,
       comparable: start ? dateComparable(start) : null,
-      display: start ? formatDatePart(start) : original,
+      display: start ? [formatDatePart(start), end && formatDatePart(end)].filter(Boolean).join(" to ") : original,
       hasDate: Boolean(start),
     };
   }
@@ -524,6 +545,7 @@
       date: event.date,
       dateLabel: event.date.display,
       details: event.details,
+      notes: event.notes,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -549,6 +571,7 @@
       date: event.date,
       dateLabel: event.date.display,
       details: event.details,
+      notes: event.notes,
       place: event.place,
       lineageX: metric.x,
       lineageDepth: metric.depth,
@@ -636,14 +659,14 @@
         if (byPerson.has(id)) byPerson.get(id).push(event);
       }
     }
-    const dateValue = (event) => event.date?.comparable ?? -Infinity;
+    const dateValue = (event) => event.date?.comparable ?? Infinity;
     return [...byPerson].map(([id, events]) => ({
       id,
       name: data.individuals.get(id)?.name.display || "(unnamed)",
       relation: relationForIds([id], ancestry),
-      events: events.sort((a, b) => dateValue(b) - dateValue(a) || a.label.localeCompare(b.label)),
-      newestLocalDate: Math.max(...events.filter((event) => eventAtLocation(event, group, locations)).map(dateValue)),
-    })).sort((a, b) => b.newestLocalDate - a.newestLocalDate || a.name.localeCompare(b.name));
+      events: events.sort((a, b) => dateValue(a) - dateValue(b)),
+      birthDate: data.individuals.get(id)?.birth?.date.comparable ?? -Infinity,
+    })).sort((a, b) => b.birthDate - a.birthDate || a.name.localeCompare(b.name));
   }
 
   function findCoordinates(place, locations) {

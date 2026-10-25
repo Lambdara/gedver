@@ -4,12 +4,162 @@
   const Core = window.GedverCore;
   const MapData = window.GedverMapData;
   const STORAGE_KEY = "gedver.locations.v1";
+  const LANGUAGE_KEY = "gedver.language.v1";
+  const DUTCH = {
+    "Language": "Taal",
+    "Open GEDCOM": "GEDCOM openen",
+    "Import coordinates": "Coördinaten importeren",
+    "Export coordinates": "Coördinaten exporteren",
+    "Controls": "Bediening",
+    "Tree": "Stamboom",
+    "Proband": "Proband",
+    "Load a GEDCOM": "Laad een GEDCOM",
+    "Only proband ancestry": "Alleen voorouders van de proband",
+    "Events": "Feiten",
+    "Birth": "Geboorte",
+    "Marriage": "Huwelijk",
+    "Death": "Overlijden",
+    "Baptism and other facts": "Doop en overige feiten",
+    "Color": "Kleur",
+    "Marker color mode": "Kleur van markeringen",
+    "Single color": "Eén kleur",
+    "Time gradient": "Tijdsverloop",
+    "Lineage position": "Positie in de stamboom",
+    "Generation depth": "Generatiediepte",
+    "Summary": "Overzicht",
+    "People": "Personen",
+    "Mapped": "Op de kaart",
+    "Unmapped": "Zonder coördinaten",
+    "Coordinates": "Coördinaten",
+    "Clear saved": "Opgeslagen wissen",
+    "Map": "Kaart",
+    "Zoom in": "Inzoomen",
+    "Zoom out": "Uitzoomen",
+    "Fit markers": "Alle markeringen tonen",
+    "Location markers": "Locatiemarkeringen",
+    "No mapped events": "Geen feiten op de kaart",
+    "Made with Natural Earth": "Gemaakt met Natural Earth",
+    "Selected location": "Geselecteerde plaats",
+    "Location": "Plaats",
+    "No location selected": "Geen plaats geselecteerd",
+    "Click a marker on the map": "Klik op een markering op de kaart",
+    "People and facts": "Personen en feiten",
+    "Highlighted facts are at this location. People: newest birth first; facts: oldest first.": "Groene feiten vonden hier plaats. Personen: jongste eerst; feiten: oudste eerst.",
+    "This page needs JavaScript enabled.": "Deze pagina vereist JavaScript.",
+    "No GEDCOM loaded": "Geen GEDCOM geladen",
+    "No proband candidates found": "Geen kandidaten voor proband gevonden",
+    "No mapped locations": "Geen plaatsen op de kaart",
+    "No unmapped locations": "Geen plaatsen zonder coördinaten",
+    "Select": "Selecteren",
+    "Remove": "Verwijderen",
+    "Latitude": "Breedtegraad",
+    "Longitude": "Lengtegraad",
+    "Update": "Bijwerken",
+    "Save": "Opslaan",
+    "Coordinates must be valid latitude and longitude values": "Vul geldige breedte- en lengtegraden in",
+    "Clear all saved coordinates from this browser?": "Alle opgeslagen coördinaten uit deze browser wissen?",
+    "Coordinates are active for this session but could not be saved": "Coördinaten zijn actief voor deze sessie maar konden niet worden opgeslagen",
+    "Event time": "Datum van het feit",
+    "No date": "Geen datum",
+    "All dated events share the same date.": "Alle gedateerde feiten hebben dezelfde datum.",
+    "No dated events are available in the current filter.": "Geen gedateerde feiten beschikbaar met de huidige filters.",
+    "Paternal side": "Vaderskant",
+    "Maternal side": "Moederskant",
+    "All scored events have the same lineage position.": "Alle berekende feiten hebben dezelfde positie in de stamboom.",
+    "No generation": "Geen generatie",
+    "No lineage data is available for the current proband and filters.": "Geen afstammingsgegevens beschikbaar voor de huidige proband en filters.",
+    "Load a GEDCOM to compute lineage colors.": "Laad een GEDCOM om afstammingskleuren te berekenen.",
+    "Generation 0 (proband)": "Generatie 0 (proband)",
+    "Generation {depth}": "Generatie {depth}",
+    "{count} events": "{count} feiten",
+    "{count} event": "{count} feit",
+    "{file} · {count} people{suffix}": "{file} · {count} personen{suffix}",
+    "Could not read {file}": "Kon {file} niet lezen",
+    "Could not read {file}: {error}": "Kon {file} niet lezen: {error}",
+    "Could not import {file}: {error}": "Kon {file} niet importeren: {error}",
+    "Imported {count} coordinate rows from {file}": "{count} coördinaten geïmporteerd uit {file}",
+    "{count} GEDCOM places are missing from the coordinate table. Check the Unmapped list below.": "{count} GEDCOM-plaatsen ontbreken in de coördinatentabel. Bekijk de lijst Zonder coördinaten hieronder.",
+    "Births {birth} · Marriages {marriage} · Deaths {death} · Other facts {other}": "Geboorten {birth} · Huwelijken {marriage} · Overlijdens {death} · Overige feiten {other}",
+    "{count} of {total} events have dates; location markers use the latest dated event there.": "{count} van {total} feiten hebben een datum; markeringen gebruiken het recentste gedateerde feit op die plaats.",
+    "{count} of {total} events have lineage positions; location markers average events at that place.": "{count} van {total} feiten hebben een positie in de stamboom; markeringen gebruiken het gemiddelde op die plaats.",
+    "All scored events are {generation}.": "Alle berekende feiten vallen onder {generation}.",
+    "{count} of {total} events have generation depths; lower numbers are closer to the proband.": "{count} van {total} feiten hebben een generatiediepte; lagere getallen staan dichter bij de proband.",
+    "Latitude for {place}": "Breedtegraad voor {place}",
+    "Longitude for {place}": "Lengtegraad voor {place}",
+    "Relation to proband: {relation}": "Verwantschap met proband: {relation}",
+    "not in ancestry": "geen voorouder",
+    "(unnamed)": "(naamloos)",
+    "Baptism": "Doop",
+    "Christening": "Doop",
+    "Burial": "Begrafenis",
+    "Cremation": "Crematie",
+    "Residence": "Woonplaats",
+    "Divorce": "Scheiding",
+    "Engagement": "Verloving",
+    "Confirmation": "Belijdenis",
+    "Occupation": "Beroep",
+    "Event": "Gebeurtenis",
+    "Fact": "Feit",
+    "Partnership": "Partnerschap",
+    "Funeral": "Uitvaart",
+    "Marriage banns": "Ondertrouw",
+    "Scattering of ashes": "Uitstrooien",
+    "Emancipation": "Handlichting",
+    "to": "tot",
+    "proband": "proband",
+    "father": "vader",
+    "mother": "moeder",
+    "paternal": "van vaderskant",
+    "maternal": "van moederskant",
+    "grandfather": "grootvader",
+    "grandmother": "grootmoeder",
+    "grandparent": "grootouder",
+    "parent": "ouder",
+  };
+
+  function loadLanguage() {
+    try { return localStorage.getItem(LANGUAGE_KEY) === "nl" ? "nl" : "en"; }
+    catch { return "en"; }
+  }
+
+  function t(message, values = {}) {
+    const translated = state.language === "nl" && Object.hasOwn(DUTCH, message) ? DUTCH[message] : message;
+    return translated.replace(/\{(\w+)\}/g, (match, key) => Object.hasOwn(values, key) ? String(values[key]) : match);
+  }
+
+  function eventCountLabel(count) {
+    return t(count === 1 ? "{count} event" : "{count} events", { count });
+  }
+
+  function translateInterface() {
+    document.documentElement.lang = state.language;
+    el.languageSelect.value = state.language;
+    document.querySelectorAll("[data-i18n]").forEach((node) => {
+      node.textContent = t(node.getAttribute("data-i18n"));
+    });
+    for (const attribute of ["title", "aria-label"]) {
+      document.querySelectorAll(`[data-i18n-${attribute}]`).forEach((node) => {
+        node.setAttribute(attribute, t(node.getAttribute(`data-i18n-${attribute}`)));
+      });
+    }
+  }
+
+  function translatedRelation(relation) {
+    if (state.language !== "nl") return relation;
+    return relation.split(" + ").map((part) => {
+      const match = part.match(/^(paternal |maternal )?((?:great-)*)?(grandfather|grandmother|grandparent)$/);
+      if (!match) return t(part);
+      return `${"over".repeat((match[2] || "").split("great-").length - 1)}${t(match[3])}${match[1] ? " " + t(match[1].trim()) : ""}`;
+    }).join(" + ");
+  }
+
   const TILE_SIZE = 256;
   const MIN_ZOOM = 4.4;
   const MAX_ZOOM = 19;
   const DEFAULT_VIEW = { centerLat: 51.45, centerLng: 8.8, zoom: 5.6 };
 
   const state = {
+    language: loadLanguage(),
     data: null,
     fileName: "",
     probandId: "",
@@ -35,6 +185,7 @@
   };
 
   const el = {
+    languageSelect: byId("languageSelect"),
     statusLine: byId("statusLine"),
     gedcomFile: byId("gedcomFile"),
     locationFile: byId("locationFile"),
@@ -79,6 +230,14 @@
   }
 
   function init() {
+    translateInterface();
+    el.languageSelect.addEventListener("change", () => {
+      state.language = el.languageSelect.value === "nl" ? "nl" : "en";
+      try { localStorage.setItem(LANGUAGE_KEY, state.language); } catch { /* Session setting still works. */ }
+      translateInterface();
+      populateProbandSelect();
+      renderAll();
+    });
     el.gedcomFile.addEventListener("change", onGedcomFile);
     el.locationFile.addEventListener("change", onLocationFile);
     el.exportLocations.addEventListener("click", exportLocations);
@@ -138,10 +297,10 @@
         populateProbandSelect();
         recalculate(true);
       } catch (error) {
-        showStatus(`Could not read ${file.name}: ${error.message}`);
+        showStatus(t("Could not read {file}: {error}", { file: file.name, error: error.message }));
       }
     };
-    reader.onerror = () => showStatus(`Could not read ${file.name}`);
+    reader.onerror = () => showStatus(t("Could not read {file}", { file: file.name }));
     reader.readAsText(file, "UTF-8");
   }
 
@@ -155,14 +314,14 @@
         state.locations = { ...state.locations, ...imported };
         saveStoredLocations(state.locations);
         recalculate(true);
-        showStatus(`Imported ${Object.keys(imported).length} coordinate rows from ${file.name}`);
+        showStatus(t("Imported {count} coordinate rows from {file}", { count: Object.keys(imported).length, file: file.name }));
       } catch (error) {
-        showStatus(`Could not import ${file.name}: ${error.message}`);
+        showStatus(t("Could not import {file}: {error}", { file: file.name, error: error.message }));
       } finally {
         el.locationFile.value = "";
       }
     };
-    reader.onerror = () => showStatus(`Could not read ${file.name}`);
+    reader.onerror = () => showStatus(t("Could not read {file}", { file: file.name }));
     reader.readAsText(file, "UTF-8");
   }
 
@@ -170,7 +329,7 @@
     el.probandSelect.innerHTML = "";
     if (!state.data || state.data.individuals.size === 0) {
       el.probandSelect.disabled = true;
-      el.probandSelect.append(new Option("No proband candidates found", ""));
+      el.probandSelect.append(new Option(t("No proband candidates found"), ""));
       state.probandId = "";
       return;
     }
@@ -181,7 +340,7 @@
     });
 
     for (const person of people) {
-      el.probandSelect.append(new Option(`${person.name.display} (${person.id})`, individualProbandValue(person.id)));
+      el.probandSelect.append(new Option(`${person.name.display === "(unnamed)" ? t("(unnamed)") : person.name.display} (${person.id})`, individualProbandValue(person.id)));
     }
 
     const normalizedSelection = normalizeProbandSelection(state.probandId);
@@ -282,12 +441,12 @@
 
   function renderStatus() {
     if (!state.data) {
-      showStatus("No GEDCOM loaded");
+      showStatus(t("No GEDCOM loaded"));
       return;
     }
     const label = selectedProbandLabel();
     const suffix = label ? ` · proband: ${label}` : "";
-    showStatus(`${state.fileName || "GEDCOM"} · ${state.data.individuals.size} people${suffix}`);
+    showStatus(t("{file} · {count} people{suffix}", { file: state.fileName || "GEDCOM", count: state.data.individuals.size, suffix }));
   }
 
   function showStatus(message) {
@@ -305,7 +464,7 @@
     el.eventBreakdown.textContent = eventBreakdownText(state.visibleEvents);
     el.missingLocationNotice.classList.toggle("hidden", !unmappedPlaces.length);
     el.missingLocationNotice.textContent = unmappedPlaces.length
-      ? `${unmappedPlaces.length.toLocaleString()} GEDCOM place name${unmappedPlaces.length === 1 ? " is" : "s are"} missing from the coordinate table. Check the Unmapped list below.`
+      ? t("{count} GEDCOM places are missing from the coordinate table. Check the Unmapped list below.", { count: unmappedPlaces.length.toLocaleString() })
       : "";
   }
 
@@ -333,7 +492,7 @@
       { birth: 0, marriage: 0, death: 0 },
     );
     const other = events.length - counts.birth - counts.marriage - counts.death;
-    return `Births ${counts.birth.toLocaleString()} · Marriages ${counts.marriage.toLocaleString()} · Deaths ${counts.death.toLocaleString()} · Other facts ${other.toLocaleString()}`;
+    return t("Births {birth} · Marriages {marriage} · Deaths {death} · Other facts {other}", { birth: counts.birth.toLocaleString(), marriage: counts.marriage.toLocaleString(), death: counts.death.toLocaleString(), other: other.toLocaleString() });
   }
 
   function renderColorLegend() {
@@ -357,55 +516,55 @@
     if (mode === "time") {
       const same = context.dateCount > 0 && context.minDate === context.maxDate;
       return {
-        title: "Event time",
-        minLabel: context.minDateLabel || "No date",
-        maxLabel: context.maxDateLabel || "No date",
+        title: t("Event time"),
+        minLabel: context.minDateLabel.replace(" to ", ` ${t("to")} `) || t("No date"),
+        maxLabel: context.maxDateLabel.replace(" to ", ` ${t("to")} `) || t("No date"),
         usable: context.dateCount > 0,
         note: context.dateCount
           ? same
-            ? "All dated events share the same date."
-            : `${context.dateCount} of ${context.totalEvents} events have dates; location markers use the latest dated event there.`
-          : "No dated events are available in the current filter.",
+            ? t("All dated events share the same date.")
+            : t("{count} of {total} events have dates; location markers use the latest dated event there.", { count: context.dateCount, total: context.totalEvents })
+          : t("No dated events are available in the current filter."),
       };
     }
 
     if (mode === "lineageX") {
       const same = context.lineageXCount > 0 && context.minLineageX === context.maxLineageX;
       return {
-        title: "Lineage position",
-        minLabel: "Paternal side",
-        maxLabel: "Maternal side",
+        title: t("Lineage position"),
+        minLabel: t("Paternal side"),
+        maxLabel: t("Maternal side"),
         usable: context.lineageXCount > 0,
         note: context.lineageXCount
           ? same
-            ? "All scored events have the same lineage position."
-            : `${context.lineageXCount} of ${context.totalEvents} events have lineage positions; location markers average events at that place.`
+            ? t("All scored events have the same lineage position.")
+            : t("{count} of {total} events have lineage positions; location markers average events at that place.", { count: context.lineageXCount, total: context.totalEvents })
           : lineageUnavailableNote(),
       };
     }
 
     const same = context.lineageDepthCount > 0 && context.minDepth === context.maxDepth;
     return {
-      title: "Generation depth",
-      minLabel: context.lineageDepthCount ? generationLabel(context.minDepth) : "No generation",
-      maxLabel: context.lineageDepthCount ? generationLabel(context.maxDepth) : "No generation",
+      title: t("Generation depth"),
+      minLabel: context.lineageDepthCount ? generationLabel(context.minDepth) : t("No generation"),
+      maxLabel: context.lineageDepthCount ? generationLabel(context.maxDepth) : t("No generation"),
       usable: context.lineageDepthCount > 0,
       note: context.lineageDepthCount
         ? same
-          ? `All scored events are ${generationLabel(context.minDepth).toLowerCase()}.`
-          : `${context.lineageDepthCount} of ${context.totalEvents} events have generation depths; lower numbers are closer to the proband.`
+          ? t("All scored events are {generation}.", { generation: generationLabel(context.minDepth).toLowerCase() })
+          : t("{count} of {total} events have generation depths; lower numbers are closer to the proband.", { count: context.lineageDepthCount, total: context.totalEvents })
         : lineageUnavailableNote(),
     };
   }
 
   function lineageUnavailableNote() {
     return state.data
-      ? "No lineage data is available for the current proband and filters."
-      : "Load a GEDCOM to compute lineage colors.";
+      ? t("No lineage data is available for the current proband and filters.")
+      : t("Load a GEDCOM to compute lineage colors.");
   }
 
   function generationLabel(depth) {
-    return Number(depth) === 0 ? "Generation 0 (proband)" : `Generation ${Number(depth).toLocaleString()}`;
+    return Number(depth) === 0 ? t("Generation 0 (proband)") : t("Generation {depth}", { depth: Number(depth).toLocaleString() });
   }
 
   function renderPlaceList() {
@@ -418,7 +577,7 @@
     if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "subtle";
-      empty.textContent = targetMapped ? "No mapped locations" : "No unmapped locations";
+      empty.textContent = targetMapped ? t("No mapped locations") : t("No unmapped locations");
       el.placeList.append(empty);
       return;
     }
@@ -437,7 +596,7 @@
     title.textContent = group.place;
     const count = document.createElement("span");
     count.className = "badge";
-    count.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
+    count.textContent = eventCountLabel(group.events.length);
     header.append(title, count);
     row.append(header);
 
@@ -448,11 +607,11 @@
       actions.className = "button-row";
       const select = document.createElement("button");
       select.type = "button";
-      select.textContent = "Select";
+      select.textContent = t("Select");
       select.addEventListener("click", () => selectPlace(group.place));
       const remove = document.createElement("button");
       remove.type = "button";
-      remove.textContent = "Remove";
+      remove.textContent = t("Remove");
       remove.addEventListener("click", () => removeCoordinate(group.place));
       actions.append(select, remove);
       row.append(actions);
@@ -470,8 +629,8 @@
     lat.min = "-90";
     lat.max = "90";
     lat.required = true;
-    lat.setAttribute("aria-label", `Latitude for ${group.place}`);
-    lat.placeholder = "Latitude";
+    lat.setAttribute("aria-label", t("Latitude for {place}", { place: group.place }));
+    lat.placeholder = t("Latitude");
     lat.value = group.coordinates ? group.coordinates.lat : "";
     const lng = document.createElement("input");
     lng.type = "number";
@@ -479,21 +638,21 @@
     lng.min = "-180";
     lng.max = "180";
     lng.required = true;
-    lng.setAttribute("aria-label", `Longitude for ${group.place}`);
-    lng.placeholder = "Longitude";
+    lng.setAttribute("aria-label", t("Longitude for {place}", { place: group.place }));
+    lng.placeholder = t("Longitude");
     lng.value = group.coordinates ? group.coordinates.lng : "";
     const save = document.createElement("button");
     save.type = "submit";
-    save.textContent = isMapped ? "Update" : "Save";
+    save.textContent = isMapped ? t("Update") : t("Save");
     grid.addEventListener("submit", (event) => {
       event.preventDefault();
       saveCoordinate(group.places || [group.place], lat.value, lng.value);
     });
     const latLabel = document.createElement("label");
-    latLabel.textContent = "Latitude";
+    latLabel.textContent = t("Latitude");
     latLabel.append(lat);
     const lngLabel = document.createElement("label");
-    lngLabel.textContent = "Longitude";
+    lngLabel.textContent = t("Longitude");
     lngLabel.append(lng);
     grid.append(latLabel, lngLabel, save);
     return grid;
@@ -503,7 +662,7 @@
     const lat = Number(latValue);
     const lng = Number(lngValue);
     if (!String(latValue).trim() || !String(lngValue).trim() || !Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) {
-      showStatus("Coordinates must be valid latitude and longitude values");
+      showStatus(t("Coordinates must be valid latitude and longitude values"));
       return;
     }
     for (const place of places) state.locations[place] = { lat, lng };
@@ -519,7 +678,7 @@
 
   function clearLocations() {
     if (!Object.keys(state.locations).length) return;
-    if (!window.confirm("Clear all saved coordinates from this browser?")) return;
+    if (!window.confirm(t("Clear all saved coordinates from this browser?"))) return;
     state.locations = {};
     saveStoredLocations(state.locations);
     recalculate(true);
@@ -531,44 +690,35 @@
     el.selectedCoordinates.innerHTML = "";
 
     if (!group) {
-      el.selectedPlaceTitle.textContent = "No location selected";
-      el.selectedPlaceMeta.textContent = "Click a marker on the map";
+      el.selectedPlaceTitle.textContent = t("No location selected");
+      el.selectedPlaceMeta.textContent = t("Click a marker on the map");
       return;
     }
 
     el.selectedPlaceTitle.textContent = group.place;
-    el.selectedPlaceMeta.textContent = `${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
+    el.selectedPlaceMeta.textContent = eventCountLabel(group.events.length);
     el.selectedCoordinates.append(renderCoordinateEditor(group, Boolean(group.coordinates)));
     const people = Core.peopleAtLocation(group, state.allEvents, state.data, state.ancestry, state.locations);
     for (const person of people) {
       const row = document.createElement("div");
       row.className = "event-row";
       const name = document.createElement("strong");
-      name.textContent = person.name;
+      name.textContent = person.name === "(unnamed)" ? t("(unnamed)") : person.name;
       const relation = document.createElement("div");
       relation.className = "subtle";
-      relation.textContent = person.relation ? `Relation to proband: ${person.relation}` : "Relation to proband: not in ancestry";
+      relation.textContent = t("Relation to proband: {relation}", { relation: person.relation ? translatedRelation(person.relation) : t("not in ancestry") });
       row.append(name, relation);
       for (const event of person.events) {
         const local = Core.eventAtLocation(event, group, state.locations);
         const fact = document.createElement("div");
         fact.className = `event-meta ${local ? "is-local" : "is-elsewhere"}`;
-        const line = document.createElement("span");
-        line.textContent = `${local ? "● " : ""}${event.label} · ${event.dateLabel || "No date"}`;
-        const place = document.createElement("span");
-        place.textContent = event.place || "Place unknown";
-        fact.append(line, place);
-        if (event.details) {
-          const details = document.createElement("span");
-          details.textContent = event.details;
-          fact.append(details);
-        }
-        if (event.type === "marriage") {
-          const partner = document.createElement("span");
-          partner.textContent = event.people.filter((id) => id !== person.id)
-            .map((id) => state.data.individuals.get(id)?.name.display || "(unnamed)").join(" + ");
-          fact.append(partner);
-        }
+        const dateLabel = (event.dateLabel || "").replace(" to ", ` ${t("to")} `);
+        const partners = event.familyId ? event.people.filter((id) => id !== person.id)
+          .map((id) => state.data.individuals.get(id)?.name.display || t("(unnamed)")).join(" + ") : "";
+        const parts = [dateLabel, event.place, partners, event.details, event.notes].filter(Boolean);
+        const label = t(event.label);
+        fact.textContent = parts.length ? `${label}${dateLabel || event.place || partners ? " · " : ": "}${parts.join(" · ")}` : label;
+        if (event.date?.raw) fact.title = event.date.raw;
         row.append(fact);
       }
       el.eventList.append(row);
@@ -795,7 +945,7 @@
       marker.setAttribute("transform", `translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})`);
       marker.setAttribute("tabindex", "0");
       marker.setAttribute("role", "button");
-      marker.setAttribute("aria-label", `${group.place}, ${group.events.length} events`);
+      marker.setAttribute("aria-label", `${group.place}, ${eventCountLabel(group.events.length)}`);
 
       const radius = Math.max(15, Math.min(30, 12 + Math.sqrt(group.events.length) * 4));
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -804,7 +954,7 @@
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
       text.textContent = String(group.events.length);
       const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-      title.textContent = `${group.place}: ${group.events.length} event${group.events.length === 1 ? "" : "s"}`;
+      title.textContent = `${group.place}: ${eventCountLabel(group.events.length)}`;
 
       marker.append(title, circle, text);
       marker.addEventListener("click", () => selectPlace(group.places[0]));
@@ -1087,7 +1237,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(locations));
     } catch {
-      showStatus("Coordinates are active for this session but could not be saved");
+      showStatus(t("Coordinates are active for this session but could not be saved"));
     }
   }
 

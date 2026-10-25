@@ -43,11 +43,11 @@ run("parses individuals, families, names, places, and dates", () => {
   assert.equal(data.submitters.get("U1").name, "File Owner");
   assert.equal(data.individuals.get("I3").name.display, "Mother SAMPLE");
   assert.equal(data.individuals.get("I2").death.date.display, "03-03-2020");
-  assert.equal(data.families.get("F1").marriage.date.display, "04-04-1998");
+  assert.equal(data.families.get("F1").marriage.date.display, "04-04-1998 to 05-05-1999");
 });
 
-run("uses earliest date from ranges and supports partial dates", () => {
-  assert.equal(Core.parseGedcomDate("BET 2 FEB 1900 AND 4 MAR 1902").display, "02-02-1900");
+run("formats ranges and supports partial dates", () => {
+  assert.equal(Core.parseGedcomDate("BET 2 FEB 1900 AND 4 MAR 1902").display, "02-02-1900 to 04-03-1902");
   assert.equal(Core.parseGedcomDate("ABT 1900").display, "1900");
   assert.equal(Core.parseGedcomDate("03-04-1729").display, "03-04-1729");
 });
@@ -128,7 +128,7 @@ run("shows known date precision without question marks", () => {
   assert.equal(Core.parseGedcomDate("").display, "");
 });
 
-run("groups people once with all their facts, newest local facts first", () => {
+run("groups people by newest birth and facts chronologically", () => {
   const data = Core.parseGedcom(`0 @I1@ INDI
 1 NAME Older /Person/
 1 BIRT
@@ -162,7 +162,7 @@ run("groups people once with all their facts, newest local facts first", () => {
   const people = Core.peopleAtLocation(group, all.events, data, all.ancestry);
   assert.equal(people.length, 2);
   assert.deepEqual(people.map((p) => p.id), ["I2", "I1"]);
-  assert.deepEqual(people[0].events.map((e) => e.type), ["burial", "death", "birth", "marriage"]);
+  assert.deepEqual(people[0].events.map((e) => e.type), ["marriage", "birth", "death", "burial"]);
   assert.equal(people[1].events.filter((e) => e.place === "Tolbert").length, 3);
   assert.equal(mapped.events.some((e) => e.type === "baptism"), true);
   assert.equal(mapped.events.some((e) => e.type === "burial"), false);
@@ -200,7 +200,39 @@ run("merges exact coordinates while preserving event names and per-person orderi
   assert.deepEqual(shared.events.map((event) => event.place).sort(), ["New name", "Old name", "Other name"]);
   assert.equal(Core.eventAtLocation(events.find((event) => event.place === "Old name"), shared), true);
   const people = Core.peopleAtLocation(shared, events, data, ancestry);
-  assert.deepEqual(people.map((person) => person.id), ["I1", "I2"], "sort by newest fact at any alias, excluding facts elsewhere");
-  assert.equal(people[0].events.length, 2, "person with two aliases appears once");
+  assert.deepEqual(people.map((person) => person.id), ["I2", "I1"], "sort by newest birth, regardless of latest local fact");
+  assert.equal(people[1].events.length, 2, "person with two aliases appears once");
   assert.equal(Core.mergeLocationGroups(Core.groupEventsByLocation(events, {})).length, 4, "unmapped places stay separate");
+});
+
+run("formats qualified date ranges while preserving source and sort value", () => {
+  const date = Core.parseGedcomDate("FROM BEF 13 JAN 1890 TO AFT 29 APR 1898");
+  assert.equal(date.display, "13-01-1890 to 29-04-1898");
+  assert.equal(date.raw, "FROM BEF 13 JAN 1890 TO AFT 29 APR 1898");
+  assert.equal(date.comparable, Core.parseGedcomDate("13 JAN 1890").comparable);
+  assert.equal(Core.parseGedcomDate("FROM 1890 TO 1898").display, "1890 to 1898");
+  assert.equal(Core.parseGedcomDate("an unknown date").display, "an unknown date");
+});
+
+run("keeps unknown birthdays and undated facts last with stable ties", () => {
+  const data = Core.parseGedcom(`0 @I1@ INDI
+1 NAME Unknown /Birthday/
+1 OCCU Molenmaker
+2 PLAC Tolbert
+1 EVEN
+2 TYPE A custom fact
+2 PLAC Tolbert
+0 @I2@ INDI
+1 NAME Known /Birthday/
+1 BIRT
+2 DATE 1900
+2 PLAC Tolbert
+1 OCCU Baker
+2 PLAC Tolbert`);
+  const { events, ancestry } = Core.extractEvents(data, { includeWithoutPlace: true });
+  const group = Core.groupEventsByLocation(events, {})[0];
+  const people = Core.peopleAtLocation(group, events, data, ancestry);
+  assert.deepEqual(people.map((person) => person.id), ["I2", "I1"]);
+  assert.deepEqual(people[0].events.map((event) => event.type), ["birth", "occupation"]);
+  assert.deepEqual(people[1].events.map((event) => event.type), ["occupation", "event"]);
 });

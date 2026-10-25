@@ -12,71 +12,77 @@ __STYLE__
     <header class="app-bar">
       <div class="brand">
         <h1>Gedver</h1>
-        <div id="statusLine" class="status-line">No GEDCOM loaded</div>
+        <div id="statusLine" class="status-line" data-i18n="No GEDCOM loaded">No GEDCOM loaded</div>
       </div>
       <div class="top-actions">
-        <label class="file-button" for="gedcomFile">Open GEDCOM</label>
+        <label class="language-choice"><span data-i18n="Language">Language</span>
+          <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+          </select>
+        </label>
+        <label class="file-button" for="gedcomFile" data-i18n="Open GEDCOM">Open GEDCOM</label>
         <input id="gedcomFile" type="file" accept=".ged,.gedcom,text/plain" />
-        <label class="file-button" for="locationFile">Import coordinates</label>
+        <label class="file-button" for="locationFile" data-i18n="Import coordinates">Import coordinates</label>
         <input id="locationFile" type="file" accept=".json,.csv,text/csv,application/json,text/plain" />
-        <button id="exportLocations" type="button">Export coordinates</button>
+        <button id="exportLocations" type="button" data-i18n="Export coordinates">Export coordinates</button>
       </div>
     </header>
 
     <main class="app-shell">
-      <aside class="panel panel-left" aria-label="Controls">
+      <aside class="panel panel-left" aria-label="Controls" data-i18n-aria-label="Controls">
         <section class="panel-section">
-          <h2>Tree</h2>
+          <h2 data-i18n="Tree">Tree</h2>
           <div class="field">
-            <label for="probandSelect">Proband</label>
+            <label for="probandSelect" data-i18n="Proband">Proband</label>
             <select id="probandSelect" disabled>
-              <option value="">Load a GEDCOM</option>
+              <option value="" data-i18n="Load a GEDCOM">Load a GEDCOM</option>
             </select>
           </div>
           <label class="choice">
             <input id="ancestryOnly" type="checkbox" checked />
-            <span>Only proband ancestry</span>
+            <span data-i18n="Only proband ancestry">Only proband ancestry</span>
           </label>
         </section>
 
         <section class="panel-section">
-          <h2>Events</h2>
+          <h2 data-i18n="Events">Events</h2>
           <label class="choice">
             <input id="filterBirth" type="checkbox" checked />
-            <span>Birth</span>
+            <span data-i18n="Birth">Birth</span>
           </label>
           <label class="choice">
             <input id="filterMarriage" type="checkbox" checked />
-            <span>Marriage</span>
+            <span data-i18n="Marriage">Marriage</span>
           </label>
           <label class="choice">
             <input id="filterDeath" type="checkbox" checked />
-            <span>Death</span>
+            <span data-i18n="Death">Death</span>
           </label>
           <label class="choice">
             <input id="filterOther" type="checkbox" checked />
-            <span>Baptism and other facts</span>
+            <span data-i18n="Baptism and other facts">Baptism and other facts</span>
           </label>
         </section>
 
         <section class="panel-section">
-          <h2>Color</h2>
-          <div class="segmented" role="radiogroup" aria-label="Marker color mode">
+          <h2 data-i18n="Color">Color</h2>
+          <div class="segmented" role="radiogroup" aria-label="Marker color mode" data-i18n-aria-label="Marker color mode">
             <label>
               <input type="radio" name="colorMode" value="single" checked />
-              <span>Single color</span>
+              <span data-i18n="Single color">Single color</span>
             </label>
             <label>
               <input type="radio" name="colorMode" value="time" />
-              <span>Time gradient</span>
+              <span data-i18n="Time gradient">Time gradient</span>
             </label>
             <label>
               <input type="radio" name="colorMode" value="lineageX" />
-              <span>Lineage position</span>
+              <span data-i18n="Lineage position">Lineage position</span>
             </label>
             <label>
               <input type="radio" name="colorMode" value="lineageDepth" />
-              <span>Generation depth</span>
+              <span data-i18n="Generation depth">Generation depth</span>
             </label>
           </div>
           <div id="colorLegend" class="color-legend hidden" aria-live="polite">
@@ -91,58 +97,58 @@ __STYLE__
         </section>
 
         <section class="panel-section">
-          <h2>Summary</h2>
+          <h2 data-i18n="Summary">Summary</h2>
           <div class="summary-grid">
-            <div class="metric"><span class="subtle">People</span><strong id="peopleCount">0</strong></div>
-            <div class="metric"><span class="subtle">Events</span><strong id="eventCount">0</strong></div>
-            <div class="metric"><span class="subtle">Mapped</span><strong id="mappedCount">0</strong></div>
-            <div class="metric"><span class="subtle">Unmapped</span><strong id="unmappedCount">0</strong></div>
+            <div class="metric"><span class="subtle" data-i18n="People">People</span><strong id="peopleCount">0</strong></div>
+            <div class="metric"><span class="subtle" data-i18n="Events">Events</span><strong id="eventCount">0</strong></div>
+            <div class="metric"><span class="subtle" data-i18n="Mapped">Mapped</span><strong id="mappedCount">0</strong></div>
+            <div class="metric"><span class="subtle" data-i18n="Unmapped">Unmapped</span><strong id="unmappedCount">0</strong></div>
           </div>
           <div id="eventBreakdown" class="summary-breakdown subtle"></div>
           <div id="missingLocationNotice" class="notice hidden"></div>
         </section>
 
         <section class="panel-section">
-          <h2>Coordinates</h2>
+          <h2 data-i18n="Coordinates">Coordinates</h2>
           <div class="button-row">
-            <button id="showUnmapped" type="button">Unmapped</button>
-            <button id="showMapped" type="button">Mapped</button>
-            <button id="clearLocations" type="button">Clear saved</button>
+            <button id="showUnmapped" type="button" data-i18n="Unmapped">Unmapped</button>
+            <button id="showMapped" type="button" data-i18n="Mapped">Mapped</button>
+            <button id="clearLocations" type="button" data-i18n="Clear saved">Clear saved</button>
           </div>
           <div id="placeList" class="place-list" aria-live="polite"></div>
         </section>
       </aside>
 
-      <section class="map-panel" aria-label="Map">
+      <section class="map-panel" aria-label="Map" data-i18n-aria-label="Map">
         <div class="map-toolbar">
-          <button id="zoomIn" type="button" title="Zoom in" aria-label="Zoom in">+</button>
-          <button id="zoomOut" type="button" title="Zoom out" aria-label="Zoom out">−</button>
-          <button id="fitMap" type="button" title="Fit markers" aria-label="Fit markers">⤢</button>
+          <button id="zoomIn" type="button" title="Zoom in" data-i18n-title="Zoom in" aria-label="Zoom in" data-i18n-aria-label="Zoom in">+</button>
+          <button id="zoomOut" type="button" title="Zoom out" data-i18n-title="Zoom out" aria-label="Zoom out" data-i18n-aria-label="Zoom out">−</button>
+          <button id="fitMap" type="button" title="Fit markers" data-i18n-title="Fit markers" aria-label="Fit markers" data-i18n-aria-label="Fit markers">⤢</button>
         </div>
         <div id="mapViewport" class="map-viewport" tabindex="0">
           <svg id="offlineLayer" class="offline-layer" aria-hidden="true"></svg>
-          <svg id="markerLayer" class="marker-layer" aria-label="Location markers"></svg>
-          <div id="mapEmpty" class="map-empty">No mapped events</div>
-          <div class="map-attribution">Made with Natural Earth</div>
+          <svg id="markerLayer" class="marker-layer" aria-label="Location markers" data-i18n-aria-label="Location markers"></svg>
+          <div id="mapEmpty" class="map-empty" data-i18n="No mapped events">No mapped events</div>
+          <div class="map-attribution" data-i18n="Made with Natural Earth">Made with Natural Earth</div>
         </div>
       </section>
 
-      <aside class="panel panel-right" aria-label="Selected location">
+      <aside class="panel panel-right" aria-label="Selected location" data-i18n-aria-label="Selected location">
         <section class="panel-section">
-          <h2>Location</h2>
-          <h3 id="selectedPlaceTitle">No location selected</h3>
-          <div id="selectedPlaceMeta" class="subtle">Click a marker on the map</div>
+          <h2 data-i18n="Location">Location</h2>
+          <h3 id="selectedPlaceTitle" data-i18n="No location selected">No location selected</h3>
+          <div id="selectedPlaceMeta" class="subtle" data-i18n="Click a marker on the map">Click a marker on the map</div>
           <div id="selectedCoordinates"></div>
         </section>
         <section class="panel-section">
-          <h2>People and facts</h2>
-          <p class="subtle">● Facts at this location · newest first</p>
+          <h2 data-i18n="People and facts">People and facts</h2>
+          <p class="subtle" data-i18n="Highlighted facts are at this location. People: newest birth first; facts: oldest first.">Highlighted facts are at this location. People: newest birth first; facts: oldest first.</p>
           <div id="eventList" class="event-list"></div>
         </section>
       </aside>
     </main>
 
-    <noscript>This page needs JavaScript enabled.</noscript>
+    <noscript data-i18n="This page needs JavaScript enabled.">This page needs JavaScript enabled.</noscript>
     <script>
 window.GedverMapData = {
   regions: [__REGIONAL_ATLAS__]

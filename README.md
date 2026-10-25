@@ -16,7 +16,9 @@ GEDCOM places are names, so Gedver needs coordinates for map markers. Add them i
 
 Places with identical coordinates share one map marker and a title with their names separated by `/`. Each fact retains its original place name. Editing coordinates in this shared view updates all displayed aliases; the coordinate list still lets you edit each place separately.
 
-The right panel groups facts by person. Facts in the selected place are highlighted; facts elsewhere are dark gray. People are sorted by their newest fact in the selected place, and each person’s facts are sorted newest first, with undated facts last. Surnames appear in capitals and partial dates show only the known year or month and year.
+The right panel groups facts by person. Facts in the selected place are highlighted; facts elsewhere are dark gray. People are sorted by birth date, newest first (unknown birthdays last), and each person’s facts are sorted oldest first, with undated facts last. Facts show available dates, places, partners and details on one wrapping line, without placeholders for missing values. Date ranges show both endpoints; the original GEDCOM date is available on hover. Surnames appear in capitals and partial dates show only the known year or month and year.
+
+Use the Language selector to switch the entire interface and known fact names between English and Dutch. The choice is saved locally in the browser. Custom fact descriptions and source notes are preserved.
 
 JSON object format:
 
