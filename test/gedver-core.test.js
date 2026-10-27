@@ -236,3 +236,49 @@ run("keeps unknown birthdays and undated facts last with stable ties", () => {
   assert.deepEqual(people[0].events.map((event) => event.type), ["birth", "occupation"]);
   assert.deepEqual(people[1].events.map((event) => event.type), ["occupation", "event"]);
 });
+
+run("omits metadata-only facts while retaining facts with partial information", () => {
+  const data = Core.parseGedcom(`0 @I1@ INDI
+1 NAME Test /Person/
+1 BIRT
+2 _UID birth-id
+2 RIN MH:IF24
+1 DEAT
+2 _UID death-id
+1 BAPM
+2 DATE 1900
+1 RESI
+2 PLAC Heerenveen
+1 OCCU Baker
+1 EVEN
+2 NOTE Recorded without a date
+0 @F1@ FAM
+1 HUSB @I1@
+1 MARR
+2 RIN MH:IF26
+1 DIV
+2 DATE 1920`);
+  const { events } = Core.extractEvents(data, { includeWithoutPlace: true });
+  assert.deepEqual(events.map((event) => event.type), ["baptism", "residence", "occupation", "event", "divorce"]);
+  assert.deepEqual(Core.extractEvents(data, {}).events.map((event) => event.type), ["residence"]);
+});
+
+run("shows Siewerd's recorded baptism without empty birth and death placeholders", () => {
+  const data = Core.parseGedcom(`0 @I14@ INDI
+1 NAME Siewerd /Zijlstra/
+1 BIRT
+2 _UID birth-id
+2 RIN MH:IF24
+1 DEAT
+2 _UID death-id
+2 RIN MH:IF25
+1 BAPM
+2 DATE 1900
+2 PLAC Heerenveen`);
+  const { events, ancestry } = Core.extractEvents(data, { includeWithoutPlace: true });
+  const group = Core.groupEventsByLocation(events, {}).find((group) => group.place === "Heerenveen");
+  const person = Core.peopleAtLocation(group, events, data, ancestry).find((person) => person.id === "I14");
+  assert.equal(person.name, "Siewerd ZIJLSTRA");
+  assert.ok(person.events.some((event) => event.type === "baptism" && event.dateLabel === "1900"));
+  assert.ok(person.events.every((event) => event.type !== "birth" && event.type !== "death"));
+});

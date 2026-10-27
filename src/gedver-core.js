@@ -58,7 +58,9 @@
   };
 
   function parseFacts(record) {
-    return record.children.filter((node) => EVENT_TAGS[node.tag]).map((node, index) => {
+    return record.children.filter((node) => EVENT_TAGS[node.tag])
+      .filter((node) => node.value === "Y" || firstChildValue(node, "TYPE").trim() || eventHasDetails(parseEventNode(node)))
+      .map((node, index) => {
       const customLabel = firstChildValue(node, "TYPE");
       const knownType = Object.hasOwn(FACT_ALIASES, customLabel.toLowerCase()) ? FACT_ALIASES[customLabel.toLowerCase()] : "";
       const type = knownType || EVENT_TAGS[node.tag];
@@ -530,6 +532,11 @@
 
   function eventHasPlace(event) {
     return Boolean(event && event.place);
+  }
+
+  function eventHasDetails(event) {
+    return [event.dateRaw, event.place, event.details, event.notes]
+      .some((value) => String(value || "").trim());
   }
 
   function makeIndividualEvent(type, individual, event, ancestry) {
