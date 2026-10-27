@@ -43,11 +43,16 @@ run("parses individuals, families, names, places, and dates", () => {
   assert.equal(data.submitters.get("U1").name, "File Owner");
   assert.equal(data.individuals.get("I3").name.display, "Mother SAMPLE");
   assert.equal(data.individuals.get("I2").death.date.display, "03-03-2020");
-  assert.equal(data.families.get("F1").marriage.date.display, "04-04-1998 to 05-05-1999");
+  assert.equal(data.families.get("F1").marriage.date.display, "between 04-04-1998 and 05-05-1999");
 });
 
 run("formats ranges and supports partial dates", () => {
-  assert.equal(Core.parseGedcomDate("BET 2 FEB 1900 AND 4 MAR 1902").display, "02-02-1900 to 04-03-1902");
+  const uncertain = Core.parseGedcomDate("BET 2 FEB 1900 AND 4 MAR 1902");
+  assert.equal(uncertain.display, "between 02-02-1900 and 04-03-1902");
+  assert.equal(uncertain.modifier, "BET");
+  assert.equal(uncertain.comparable, Core.parseGedcomDate("2 FEB 1900").comparable);
+  assert.equal(Core.parseGedcomDate("BET 1900 AND 1902").display, "between 1900 and 1902");
+  assert.equal(Core.parseGedcomDate("FROM 2 FEB 1900 TO 4 MAR 1902").display, "02-02-1900 to 04-03-1902");
   assert.equal(Core.parseGedcomDate("ABT 1900").display, "1900");
   assert.equal(Core.parseGedcomDate("03-04-1729").display, "03-04-1729");
 });

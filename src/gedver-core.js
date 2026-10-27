@@ -324,7 +324,9 @@
       start,
       end,
       comparable: start ? dateComparable(start) : null,
-      display: start ? [formatDatePart(start), end && formatDatePart(end)].filter(Boolean).join(" to ") : original,
+      display: start ? (modifier === "BET" && end
+        ? `between ${formatDatePart(start)} and ${formatDatePart(end)}`
+        : [formatDatePart(start), end && formatDatePart(end)].filter(Boolean).join(" to ")) : original,
       hasDate: Boolean(start),
     };
   }

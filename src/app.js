@@ -106,6 +106,7 @@
     "Scattering of ashes": "Uitstrooien",
     "Emancipation": "Handlichting",
     "to": "tot",
+    "between {start} and {end}": "tussen {start} en {end}",
     "proband": "proband",
     "father": "vader",
     "mother": "moeder",
@@ -149,7 +150,11 @@
     return relation.split(" + ").map((part) => {
       const match = part.match(/^(paternal |maternal )?((?:great-)*)?(grandfather|grandmother|grandparent)$/);
       if (!match) return t(part);
-      return `${"over".repeat((match[2] || "").split("great-").length - 1)}${t(match[3])}${match[1] ? " " + t(match[1].trim()) : ""}`;
+      const count = (match[2] || "").split("great-").length - 1;
+      const prefix = count >= 4
+        ? `over${String(count).replace(/\d/g, (digit) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(digit)])}`
+        : "over".repeat(count);
+      return `${prefix}${t(match[3])}${match[1] ? " " + t(match[1].trim()) : ""}`;
     }).join(" + ");
   }
 
@@ -712,7 +717,9 @@
         const local = Core.eventAtLocation(event, group, state.locations);
         const fact = document.createElement("div");
         fact.className = `event-meta ${local ? "is-local" : "is-elsewhere"}`;
-        const dateLabel = (event.dateLabel || "").replace(" to ", ` ${t("to")} `);
+        const dateLabel = (event.dateLabel || "")
+          .replace(/^between (.+) and (.+)$/, (_, start, end) => t("between {start} and {end}", { start, end }))
+          .replace(" to ", ` ${t("to")} `);
         const partners = event.familyId ? event.people.filter((id) => id !== person.id)
           .map((id) => state.data.individuals.get(id)?.name.display || t("(unnamed)")).join(" + ") : "";
         const parts = [dateLabel, event.place, partners, event.details, event.notes].filter(Boolean);

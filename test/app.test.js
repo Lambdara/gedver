@@ -198,3 +198,34 @@ assert.equal(node('languageSelect').value, 'nl');
 assert.equal(node('statusLine').textContent, 'Geen GEDCOM geladen');
 assert.equal(node('exportLocations').textContent, 'Coördinaten exporteren');
 console.log('ok - chronological facts, compact missing values, relationships, date ranges and persisted language');
+
+const generations = Array.from({ length: 15 }, (_, depth) => `0 @G${depth}@ INDI
+1 NAME Generation${depth} /Ancestor/
+1 BIRT
+2 DATE BET 1800 AND 1802
+2 PLAC Amsterdam
+1 RESI
+2 DATE FROM 1820 TO 1830
+2 PLAC Amsterdam
+${depth < 14 ? `1 FAMC @GF${depth}@` : ''}`);
+const families = Array.from({ length: 14 }, (_, depth) => `0 @GF${depth}@ FAM
+1 HUSB @G${depth + 1}@
+1 CHIL @G${depth}@`);
+node('gedcomFile').files = [{ name: 'generations.ged', text: [...generations, ...families].join('\n') }];
+node('gedcomFile').dispatch('change');
+node('probandSelect').value = 'INDI:G0';
+node('probandSelect').dispatch('change');
+marker('Amsterdam').dispatch('click');
+const generationRow = (depth) => node('eventList').children.find((row) => row.children[0].textContent === `Generation${depth} ANCESTOR`);
+for (const [depth, expected] of [[2, 'grootvader'], [3, 'overgrootvader'], [5, 'overoverovergrootvader'], [6, 'over⁴grootvader'], [14, 'over¹²grootvader']]) {
+  assert.equal(generationRow(depth).children[1].textContent, `Verwantschap met proband: ${expected} van vaderskant`);
+}
+assert.equal(generationRow(0).children[2].textContent, 'Geboorte · tussen 1800 en 1802 · Amsterdam');
+assert.equal(generationRow(0).children[2].title, 'BET 1800 AND 1802');
+assert.equal(generationRow(0).children[3].textContent, 'Woonplaats · 1820 tot 1830 · Amsterdam');
+node('languageSelect').value = 'en';
+node('languageSelect').dispatch('change');
+assert.equal(generationRow(0).children[2].textContent, 'Birth · between 1800 and 1802 · Amsterdam');
+assert.equal(generationRow(0).children[3].textContent, 'Residence · 1820 to 1830 · Amsterdam');
+assert.equal(generationRow(6).children[1].textContent, 'Relation to proband: paternal great-great-great-great-grandfather');
+console.log('ok - compact Dutch ancestry and uncertain dates versus periods in both languages');

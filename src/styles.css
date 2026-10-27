@@ -464,6 +464,8 @@ input[type="file"] {
 }
 
 .event-row {
+  min-width: 0;
+  overflow-wrap: anywhere;
   border: 1px solid var(--line);
   border-radius: 6px;
   display: grid;

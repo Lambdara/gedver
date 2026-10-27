@@ -20,6 +20,8 @@ The right panel groups facts by person. Facts in the selected place are highligh
 
 Use the Language selector to switch the entire interface and known fact names between English and Dutch. The choice is saved locally in the browser. Custom fact descriptions and source notes are preserved.
 
+Uncertain GEDCOM dates (`BET … AND …`) appear as “between … and …” (Dutch: “tussen … en …”); periods (`FROM … TO …`) appear as “… to …” (Dutch: “… tot …”). Dutch ancestor labels abbreviate four or more repeated “over” prefixes with a superscript count, such as “over⁴grootvader”.
+
 JSON object format:
 
 ```json
